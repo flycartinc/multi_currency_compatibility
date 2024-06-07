@@ -1,0 +1,27 @@
+#wdr-compatibility-main {
+  font-family: Helvetica, sans-serif, Arial, sans-serif;
+  margin-right: 15px;
+  background-color: rgba(248, 248, 252, 1);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  .wdrc-body {
+    min-height: 60vh;
+  }
+  .wdrc-fields-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .wdrc-fields-save-section button {
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    background-color: #4747EB;
+    padding: 10px 16px;
+    color: #FFF;
+    border-radius: 6px;
+  }
+
+}
