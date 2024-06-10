@@ -1,6 +1,6 @@
 <?php
 
-namespace WDR\Core\Modules\Addons\MultiCurrency\Compatibility;
+namespace WDRCS\App\Compatibility;
 
 use WDR\Core\Helpers\WC;
 

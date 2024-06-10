@@ -23,28 +23,28 @@ class Base {
 				'woo-multi-currency/woo-multi-currency.php',
 				'woocommerce-multi-currency/woocommerce-multi-currency.php',
 			],
-			'handler'     => '\WDR\Core\Modules\Addons\MultiCurrency\Compatibility\VillaTheme',
+			'handler'     => '\WDRCS\App\Compatibility\VillaTheme',
 		],
 		'realmag_currency_switcher'    => [
 			'name'        => 'Realmag currency switcher',
 			'description' => '',
 			'author'      => 'Realmag',
 			'file'        => [ 'woocommerce-currency-switcher/index.php' ],
-			'handler'     => '\WDR\Core\Modules\Addons\MultiCurrency\Compatibility\RealMag',
+			'handler'     => '\WDRCS\App\Compatibility\RealMag',
 		],
 		'wpml_currency_switcher'       => [
 			'name'        => 'WPML currency switcher',
 			'description' => '',
 			'author'      => 'WPML',
 			'file'        => [ 'sitepress-multilingual-cms/sitepress.php' ],
-			'handler'     => '\WDR\Core\Modules\Addons\MultiCurrency\Compatibility\WPML',
+			'handler'     => '\WDRCS\App\Compatibility\WPML',
 		],
 		'wpwham_currency_switcher'     => [
 			'name'        => 'WPWham currency switcher',
 			'description' => '',
 			'author'      => 'WPWham',
 			'file'        => [ 'currency-switcher-woocommerce/currency-switcher-woocommerce.php' ],
-			'handler'     => '\WDR\Core\Modules\Addons\MultiCurrency\Compatibility\WPWham',
+			'handler'     => '\WDRCS\App\Compatibility\WPWham',
 		],
 	];
 
