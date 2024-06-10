@@ -83,6 +83,12 @@ require __DIR__ . '/vendor/autoload.php';
 
 if(! class_exists(\WDRCS\App\Router::class)) return;
 
-if (! method_exists(\WDRCS\App\Router::class, 'init')) return;
+$myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    'https://github.com/flycartinc/multi_currency_compatibility',
+    __FILE__,
+    'wdr-multi-currency-compatibility'
+);
+$myUpdateChecker->getVcsApi()->enableReleaseAssets();
 
+if (! method_exists(\WDRCS\App\Router::class, 'init')) return;
 \WDRCS\App\Router::init();

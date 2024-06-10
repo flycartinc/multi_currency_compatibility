@@ -5,13 +5,13 @@ defined('ABSPATH') || exit;
 <div class="wdr-compatibility-main" id="wdr-compatibility-main">
     <div>
         <h1>
-            <?php _e('Multi-currency Compatibility for Woo Discount Rules', 'woo-discount-rules'); ?>
+            <?php _e('Multi-currency Compatibility for Woo Discount Rules', 'wdr-multi-currency-compatibility'); ?>
         </h1>
     </div>
     <div class="wdrc-body">
         <?php if (isset($fields) && empty($fields)): ?>
             <div class="wdrc-not-available">
-                <p><?php _e("Compatibility plugins not found", "woo-discount-rules"); ?></p>
+                <p><?php _e("Compatibility plugins not found", "wdr-multi-currency-compatibility"); ?></p>
             </div>
         <?php elseif (isset($fields) && is_array($fields)): ?>
             <div class="wdrc-fields">
@@ -32,14 +32,14 @@ defined('ABSPATH') || exit;
                                                name="wdrc_compatibility[<?php echo esc_attr($key ?? ''); ?>]"
                                                id="<?php echo esc_attr($key ?? ''); ?>"
                                                value="1" <?php if ($field['is_enabled'] ?? 0 == 1) { ?> checked <?php } ?>>
-                                        <?php echo sprintf(__('Enable %s', 'woo-discount-rules'), $field['name'] ?? ''); ?>
+                                        <?php echo sprintf(__('Enable %s', 'wdr-multi-currency-compatibility'), $field['name'] ?? ''); ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                         <div class="wdrc-fields-save-section">
                             <button type="button" onclick="wdrc.saveCompatibility();"
-                                    id="wdrc-save-button"><?php _e("Save", "woo-discount-rules"); ?></button>
+                                    id="wdrc-save-button"><?php _e("Save", "wdr-multi-currency-compatibility"); ?></button>
                         </div>
                     </div>
                 </form>

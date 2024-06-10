@@ -125,7 +125,7 @@ class VillaTheme extends Currency
         }
         $discount_value_formatted = WC::formatPrice((float)$discount_value * $rate);
         if ($discount_type == 'flat') {
-            $discount_value_formatted .= ' ' . __('flat', 'woo-discount-rules');
+            $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');
         } elseif ($range['discount_method'] == 'set' && $discount_type == 'fixed_set_price') {
             $discount_value_formatted = WC::formatPrice($range['discount_price']);
         }

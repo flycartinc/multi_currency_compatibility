@@ -17,7 +17,7 @@ copy_folder(){
   fi
   mkdir "$pack_folder"
   mkdir "$compressed_plugin_folder"
-  move_dir=("App" "Assets" "vendor" "wdr-multi-currency-compatibility.php")
+  move_dir=("App" "Assets" "i18n" "vendor" "wdr-multi-currency-compatibility.php")
   # shellcheck disable=sc2068
   for dir in ${move_dir[@]}; do
     cp -r "$current_dir/$dir" "$compressed_plugin_folder/$dir"

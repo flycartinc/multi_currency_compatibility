@@ -58,7 +58,7 @@ class WPML extends Currency
         $discount_value_formatted = apply_filters('wcml_raw_price_amount', (float)$discount_value);
         $discount_value_formatted = WC::formatPrice((float)$discount_value_formatted, array('currency' => $currency_code));
         if ($discount_type == 'flat') {
-            $discount_value_formatted .= ' ' . __('flat', 'woo-discount-rules');
+            $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');
         }
         $discount_value_formatted .= !empty($cart_discount_text) ? $cart_discount_text : '';
         return $discount_value_formatted;

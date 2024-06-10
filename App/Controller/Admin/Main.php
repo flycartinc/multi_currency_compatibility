@@ -71,7 +71,7 @@ class Main extends Base{
 		$response = array(
 			'success' => false,
 			'data' => array(
-				'message' => __('Security check failed', 'woo-discount-rules'),
+				'message' => __('Security check failed', 'wdr-multi-currency-compatibility'),
 			),
 		);
 		if (!WC::hasAdminPrivilege() || !wp_verify_nonce(Input::get('wdrc_nonce', ''), 'wdrc_compatibility_ajax')) {
@@ -81,13 +81,13 @@ class Main extends Base{
 		$option_key = Input::get('option_key', '', 'post');
 		$option_key = preg_replace('/[^A-Za-z\d_\-]/', '', $option_key);
 		if (empty($option_key)) {
-			$response['data']['message'] = __('Compatibility not saved.', 'woo-discount-rules');
+			$response['data']['message'] = __('Compatibility not saved.', 'wdr-multi-currency-compatibility');
 			wp_send_json($response);
 		}
 		$compatibility = !empty($compatibility) ? array_map('absint', $compatibility) : $compatibility;
 		update_option($option_key, $compatibility);
 		$response['success'] = true;
-		$response['data']['message'] = __('Compatibility saved successfully.', 'woo-discount-rules');
+		$response['data']['message'] = __('Compatibility saved successfully.', 'wdr-multi-currency-compatibility');
 		wp_send_json($response);
 	}
 
