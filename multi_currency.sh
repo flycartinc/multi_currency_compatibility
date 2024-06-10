@@ -11,7 +11,7 @@ copy_folder(){
   cd "$current_dir"
   cd ..
   pack_folder=$PWD"/generated_pack"
-  compressed_plugin_folder=$pack_folder"/multi_currency_compatibility"
+  compressed_plugin_folder=$pack_folder"/wdr-multi-currency-compatibility"
   if [ -d "$pack_folder"]; then
     rm -r "$pack_folder"
   fi
