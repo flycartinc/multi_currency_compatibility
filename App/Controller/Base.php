@@ -1,5 +1,7 @@
 <?php
 namespace WDRCS\App\Controller;
+
+defined("ABSPATH") or die();
 class Base {
 
 	/**
@@ -53,7 +55,7 @@ class Base {
 	 *
 	 * @return array
 	 */
-	public static function getList(): array
+	public static function getList()
 	{
 		$compatibilities = self::$multi_currency_compatibility;
 		$list = [];

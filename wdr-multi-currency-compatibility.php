@@ -18,8 +18,6 @@
  * WC tested up to:     8.0
  */
 
-use App\Router;
-
 defined( 'ABSPATH' ) or die();
 
 /**
