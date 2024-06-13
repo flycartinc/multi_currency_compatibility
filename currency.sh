@@ -1,33 +1,33 @@
 echo "Multi currency compatibility"
 current_dir="$PWD"
-composer_run(){
-  # shellcheck disable=sc2164
+composer_run() {
+  # shellcheck disable=SC2164
   cd "$current_dir"
   composer install --no-dev -q
   composer update --no-dev -q
   cd "$current_dir"
 }
-copy_folder(){
-  cd "$current_dir"
+copy_folder() {
+  cd $current_dir
   cd ..
-  pack_folder=$PWD"/generated_pack"
-  compressed_plugin_folder=$pack_folder"/wdr-multi-currency-compatibility"
-  if [ -d "$pack_folder"]; then
+  pack_folder=$PWD"/compressed_pack"
+  compress_plugin_folder=$pack_folder"/wdr-multi-currency-compatibility"
+  if [ -d "$pack_folder" ]; then
     rm -r "$pack_folder"
   fi
   mkdir "$pack_folder"
-  mkdir "$compressed_plugin_folder"
+  mkdir "$compress_plugin_folder"
   move_dir=("App" "Assets" "i18n" "vendor" "wdr-multi-currency-compatibility.php")
-  # shellcheck disable=sc2068
+  # shellcheck disable=SC2068
   for dir in ${move_dir[@]}; do
-    cp -r "$current_dir/$dir" "$compressed_plugin_folder/$dir"
+    cp -r "$current_dir/$dir" "$compress_plugin_folder/$dir"
   done
   cd "$current_dir"
 }
-function zip_folder(){
+zip_folder() {
   cd "$current_dir"
   cd ..
-  pack_compress_folder=$PWD"/generated_pack"
+  pack_compress_folder=$PWD"/compressed_pack"
   cd "$pack_compress_folder"
   zip_name="wdr-multi-currency-compatibility"
   rm "$zip_name".zip
