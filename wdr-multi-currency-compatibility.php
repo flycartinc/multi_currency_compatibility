@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name:         Multi currency compatibility
+ * Plugin Name:         Multi-currency
  * Plugin URI:          https://www.flycart.org
- * Description:         This add-on used for currency switcher plugins compatibility in woo discount rules.
+ * Description:         Helpful to provide compatibility for Multi-currency plugins.
  * Version:             1.0.0
  * Requires at least:   5.3
  * Requires PHP:        5.6
