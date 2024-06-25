@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:         Multi-currency
+ * Plugin Name:         Discount Rules:Multi-currency
  * Plugin URI:          https://www.flycart.org
  * Description:         Helpful to provide compatibility for Multi-currency plugins.
  * Version:             1.0.0

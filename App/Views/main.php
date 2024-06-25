@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 <div class="wdr-compatibility-main" id="wdr-compatibility-main">
     <div>
         <h1>
-            <?php _e('Multi-currency Compatibility for Woo Discount Rules', 'wdr-multi-currency-compatibility'); ?>
+            <?php _e('Multi-currency Compatibility for Discount Rules', 'wdr-multi-currency-compatibility'); ?>
         </h1>
     </div>
     <div class="wdrc-body">
