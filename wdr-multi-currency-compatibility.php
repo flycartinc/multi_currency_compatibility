@@ -69,7 +69,7 @@ if ( !isWDRLatestVersion() ) {
 /**
  * Plugin constants.
  */
-defined( 'WDRCS_PLUGIN_NAME' ) or define( 'WDRCS_PLUGIN_NAME', 'Multi currency compatibility' );
+defined( 'WDRCS_PLUGIN_NAME' ) or define( 'WDRCS_PLUGIN_NAME', 'Multi-currency' );
 defined( 'WDRCS_PLUGIN_VERSION' ) or define( 'WDRCS_PLUGIN_VERSION', '1.0.0' );
 defined( 'WDRCS_PLUGIN_SLUG' ) or define( 'WDRCS_PLUGIN_SLUG', 'wdr-multi-currency-compatibility' );
 defined('WDRCS_PLUGIN_PATH') || define('WDRCS_PLUGIN_PATH', plugin_dir_path(__FILE__));
