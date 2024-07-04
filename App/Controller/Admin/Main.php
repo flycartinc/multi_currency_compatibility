@@ -40,6 +40,7 @@ class Main extends Base{
 			$active_addons[] = $slug;
 		}
 		update_option( 'wdr_active_addons', $active_addons );
+		return true;
 	}
 
 
