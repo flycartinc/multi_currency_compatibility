@@ -72,6 +72,7 @@ if ( !isWDRLatestVersion() ) {
 defined( 'WDRCS_PLUGIN_NAME' ) or define( 'WDRCS_PLUGIN_NAME', 'Multi-currency' );
 defined( 'WDRCS_PLUGIN_VERSION' ) or define( 'WDRCS_PLUGIN_VERSION', '1.0.0' );
 defined( 'WDRCS_PLUGIN_SLUG' ) or define( 'WDRCS_PLUGIN_SLUG', 'wdr-multi-currency-compatibility' );
+defined('WDRCS_PLUGIN_FILE') || define('WDRCS_PLUGIN_FILE', __FILE__);
 defined('WDRCS_PLUGIN_PATH') || define('WDRCS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 defined('WDRCS_PLUGIN_URL') || define('WDRCS_PLUGIN_URL', plugin_dir_url(__FILE__));
 if ( ! file_exists( __DIR__ . '/vendor/autoload.php' ) ) {

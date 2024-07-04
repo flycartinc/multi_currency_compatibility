@@ -30,6 +30,36 @@ class Main extends Base{
 	}
 
 	/**
+	 * Run plugin activation scripts.
+	 */
+	public static function activate(){
+
+		$slug ="multi_currency";
+		$active_addons = (array) get_option( 'wdr_active_addons', [] );
+		if ( ! in_array( $slug, $active_addons ) ) {
+			$active_addons[] = $slug;
+		}
+		update_option( 'wdr_active_addons', $active_addons );
+	}
+
+
+	/**
+	 * Run plugin activation scripts.
+	 */
+	public static function deactivate()
+	{
+		$slug ="multi_currency";
+		$active_addons = (array) get_option( 'wdr_active_addons', [] );
+		if ( in_array( $slug, $active_addons ) ) {
+			if ( ( $key = array_search( $slug, $active_addons ) ) !== false ) {
+				unset( $active_addons[ $key ] );
+			}
+		}
+		update_option( 'wdr_active_addons', $active_addons );
+
+	}
+
+	/**
 	 * Enqueue assets.
 	 *
 	 * @return void

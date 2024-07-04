@@ -95,4 +95,24 @@ class Base {
 
 		return ( isset( $options[ $key ] ) ) ? $options[ $key ] : $default;
 	}
+
+	/**
+	 * @param array $hooks
+	 *
+	 * @return array
+	 */
+	static function removeSuppressedHooks( $hooks ) {
+		if ( empty( $hooks ) || ! is_array( $hooks ) ) {
+			return $hooks;
+		}
+		if ( isset( $hooks['woocommerce_get_price_html'] ) ) {
+			unset( $hooks['woocommerce_get_price_html'] );
+		}
+		if ( isset( $hooks['woocommerce_before_calculate_totals'] ) ) {
+			unset( $hooks['woocommerce_before_calculate_totals'] );
+		}
+
+		return $hooks;
+	}
+
 }
