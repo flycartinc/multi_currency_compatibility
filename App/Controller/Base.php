@@ -105,6 +105,9 @@ class Base {
 		if ( empty( $hooks ) || ! is_array( $hooks ) ) {
 			return $hooks;
 		}
+		if ( isset( $hooks['woocommerce_product_get_regular_price'] ) ) {
+			unset( $hooks['woocommerce_product_get_regular_price'] );
+		}
 		if ( isset( $hooks['woocommerce_get_price_html'] ) ) {
 			unset( $hooks['woocommerce_get_price_html'] );
 		}

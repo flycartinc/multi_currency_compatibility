@@ -17,6 +17,7 @@ class RealMag extends Currency
         add_filter('wdr_discounted_cart_item_price', [__CLASS__, 'getCartConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
         add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
+	    add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
     }
 
     /**
