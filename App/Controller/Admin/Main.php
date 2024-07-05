@@ -57,7 +57,7 @@ class Main extends Base{
 			}
 		}
 		update_option( 'wdr_active_addons', $active_addons );
-
+		return true;
 	}
 
 	/**

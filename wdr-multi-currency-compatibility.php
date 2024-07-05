@@ -90,6 +90,6 @@ $myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateCh
 $myUpdateChecker->getVcsApi()->enableReleaseAssets();
 
 if (! method_exists(\WDRCS\App\Router::class, 'init')) return;
-register_activation_hook(WDRCS_PLUGIN_FILE, ['WDRCS\App\Controller\Admin\Main::activate']);
-register_deactivation_hook(WDRCS_PLUGIN_FILE, ['WDRCS\App\Controller\Admin\Main::deactivate']);
+register_activation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::activate');
+register_deactivation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::deactivate');
 \WDRCS\App\Router::init();
