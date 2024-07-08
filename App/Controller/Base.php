@@ -111,9 +111,6 @@ class Base {
 		if ( isset( $hooks['woocommerce_get_price_html'] ) ) {
 			unset( $hooks['woocommerce_get_price_html'] );
 		}
-		if ( isset( $hooks['woocommerce_before_calculate_totals'] ) ) {
-			unset( $hooks['woocommerce_before_calculate_totals'] );
-		}
 
 		return $hooks;
 	}
