@@ -23,5 +23,11 @@
     color: #FFF;
     border-radius: 6px;
   }
-
+  .wdrc-fields-save-section button:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+.alertify-notifier .ajs-message.ajs-success{
+  color: #fff;
 }
