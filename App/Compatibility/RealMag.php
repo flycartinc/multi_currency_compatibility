@@ -98,7 +98,7 @@ class RealMag extends Currency {
 	 */
 	static function getConvertedPrice( $price, string $discount_type ) {
 		global $WOOCS;
-		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'wcml_raw_price_amount' ) ) {
+		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' ) ) {
 			return $price;
 		}
 		$currencies = $WOOCS->get_currencies();
