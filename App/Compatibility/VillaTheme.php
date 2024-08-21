@@ -18,7 +18,8 @@ class VillaTheme extends Currency
      */
     function run()
     {
-        add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
+	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
+	    add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_cart_item_price', [__CLASS__, 'getCartConvertedPrice'], 10, 2);
         add_filter('wdr_discount_coupon_data', [__CLASS__, 'getCouponData'], 10, 1);
         add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
@@ -28,7 +29,34 @@ class VillaTheme extends Currency
 	    }
     }
 
-    /**
+	/**
+	 * Converting price amount.
+	 *
+	 * @param int|float $price Item price.
+	 * @param string $from_currency
+	 * @param string $to_currency
+	 *
+	 * @return float|int
+	 */
+	static function getCovertAmount($price, $from_currency, $to_currency)
+	{
+		if(empty($price) && empty($to_currency)) return $price;
+		$setting = self::getCurrencySettingObject();
+		if ($setting === null) {
+			return null;
+		}
+		$selected_currencies = $setting->get_list_currencies();
+		$current_currency = $from_currency;
+
+		if (!$current_currency || !isset($selected_currencies[$current_currency]['rate'])) {
+			return null;
+		}
+		$currency_rate = $selected_currencies[$current_currency]['rate'];
+		return (float) $price / $currency_rate;
+	}
+
+
+	/**
      * Get the currency setting object.
      *
      * @return object|null The currency setting object or null if not found.
@@ -56,9 +84,11 @@ class VillaTheme extends Currency
         }
         $selected_currencies = $setting->get_list_currencies();
         $current_currency = $setting->get_current_currency();
-        if (!$current_currency || !isset($selected_currencies[$current_currency]['rate'])) {
+
+	    if (!$current_currency || !isset($selected_currencies[$current_currency]['rate'])) {
             return null;
         }
+
         return $selected_currencies[$current_currency]['rate'];
     }
 

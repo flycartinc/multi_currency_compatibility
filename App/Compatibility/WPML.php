@@ -17,10 +17,30 @@ class WPML extends Currency
     function run()
     {
         add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
-        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
-        add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
+        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10,2 );
+	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
+		add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
     }
 
+	/**
+	 * Converting price amount.
+	 *
+	 * @param int|float $price Item price.
+	 * @param string $from_currency
+	 * @param string $to_currency
+	 *
+	 * @return float|int
+	 */
+	public static function getCovertAmount($price, $from_currency , $to_currency) {
+		if (!is_numeric($price) || empty($price)) {
+			return $price;
+		}
+		global $woocommerce_wpml;
+		if( ! method_exists($woocommerce_wpml,'get_multi_currency')) return $price ;
+		$multi_currency = $woocommerce_wpml->get_multi_currency();
+		$form_currency_rate = $multi_currency->currencies[$from_currency]['rate'];
+		return (float) $price / $form_currency_rate;
+	}
 
     /**
      * Converting price amount.
@@ -31,7 +51,7 @@ class WPML extends Currency
      */
     static function getConvertedPrice($price, string $discount_type)
     {
-        if (!is_numeric($price) || empty($price)) {
+	    if (!is_numeric($price) || empty($price)) {
             return $price;
         }
         return apply_filters('wcml_raw_price_amount', $price);
@@ -73,7 +93,7 @@ class WPML extends Currency
     static function getCurrentCurrencyCode()
     {
         global $woocommerce_wpml;
-        if (!empty($woocommerce_wpml)) {
+        if (!empty($woocommerce_wpml) && method_exists($woocommerce_wpml, 'get_multi_currency') && method_exists($woocommerce_wpml, 'get_client_currency')) {
             $multi_currency = $woocommerce_wpml->get_multi_currency();
             return $multi_currency->get_client_currency();
         }

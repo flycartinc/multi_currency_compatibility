@@ -14,6 +14,7 @@ class RealMag extends Currency {
 	 * @return void
 	 */
 	function run() {
+		add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
 		add_filter( 'wdr_discount_get_fixed_price', [ __CLASS__, 'getConvertedPrice' ], 10, 2 );
 		add_filter( 'wdr_discounted_cart_item_price', [ __CLASS__, 'getCartConvertedPrice' ], 10, 2 );
 		add_filter( 'wdr_discounted_value_format', [ __CLASS__, 'getConvertedValue' ], 10, 2 );
@@ -21,6 +22,25 @@ class RealMag extends Currency {
 		if ( Settings::get( 'suppress_other_discount_plugins' ) ) {
 			add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
 		}
+	}
+
+
+	/**
+	 * Converting price amount based on currency.
+	 *
+	 * @param float|int $price Item price.
+	 * @param string $from_currency
+	 * @param string $to_currency
+	 *
+	 * @return float|int
+	 */
+	static function getCovertAmount( $price, $from_currency, $to_currency) {
+
+		global $WOOCS;
+		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'convert_from_to_currency' )) {
+			return $price;
+		}
+		return $WOOCS->convert_from_to_currency( $price,$from_currency,$to_currency );
 	}
 
 	/**
@@ -78,11 +98,11 @@ class RealMag extends Currency {
 	 */
 	static function getConvertedPrice( $price, string $discount_type ) {
 		global $WOOCS;
-		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'wcml_raw_price_amount' ) ) {
+		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' ) ) {
 			return $price;
 		}
-
-		return $WOOCS->wcml_raw_price_amount( $price );
+		$currencies = $WOOCS->get_currencies();
+		return floatval($price) * floatval($currencies[$WOOCS->current_currency]['rate']);
 	}
 
 	/**
