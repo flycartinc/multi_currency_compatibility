@@ -101,8 +101,8 @@ class RealMag extends Currency {
 		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'wcml_raw_price_amount' ) ) {
 			return $price;
 		}
-
-		return $WOOCS->wcml_raw_price_amount( $price );
+		$currencies = $WOOCS->get_currencies();
+		return floatval($price) * floatval($currencies[$WOOCS->current_currency]['rate']);
 	}
 
 	/**
