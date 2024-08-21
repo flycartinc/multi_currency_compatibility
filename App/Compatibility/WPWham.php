@@ -17,7 +17,8 @@ class WPWham extends Currency
      */
     function run()
     {
-        add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
+	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
+	    add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_cart_item_price', [__CLASS__, 'getCartConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
         add_filter('wdr_discount_coupon_data', [__CLASS__, 'getCouponData'], 10, 1);
@@ -26,6 +27,24 @@ class WPWham extends Currency
 		    add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
 	    }
     }
+
+	/**
+	 * Converting price amount.
+	 *
+	 * @param float|int $price Item price.
+	 * @param string $from_currency
+	 * @param string $to_currency
+	 *
+	 * @return float|int
+	 */
+	static function getCovertAmount($price, $from_currency, $to_currency)
+	{
+		if (empty($price) || !function_exists('alg_get_current_currency_code')) {
+			return $price;
+		}
+		$rate = self::getCurrencyExchangeRate($from_currency);
+		return (float) $price / $rate;
+	}
 
     /**
      * Converting cart coupon data.
