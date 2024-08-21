@@ -55,7 +55,7 @@ if ( ! function_exists( 'isWDRLatestVersion' ) ) {
 	function isWDRLatestVersion() {
 		$db_version = get_option( 'wdr_version', '' );
 		if ( ! empty( $db_version ) ) {
-			return ( version_compare( $db_version, '3.0.0', '>=' ) );
+			return ( version_compare( $db_version, '2.9.99', '>=' ) );
 		}
 
 		return false;
