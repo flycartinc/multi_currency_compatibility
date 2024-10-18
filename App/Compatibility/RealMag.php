@@ -18,6 +18,7 @@ class RealMag extends Currency {
 		add_filter( 'wdr_discount_get_fixed_price', [ __CLASS__, 'getConvertedPrice' ], 10, 2 );
 		add_filter( 'wdr_discounted_cart_item_price', [ __CLASS__, 'getCartConvertedPrice' ], 10, 2 );
 		add_filter( 'wdr_discounted_value_format', [ __CLASS__, 'getConvertedValue' ], 10, 2 );
+		add_filter( 'wdr_discount_product_data', [ __CLASS__, 'getProductData' ], 10, 1 );
 		add_filter( 'wdr_apply_coupon_discount_based_on_filters', '__return_false', 100 );
 		if ( Settings::get( 'suppress_other_discount_plugins' ) ) {
 			add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
@@ -160,6 +161,11 @@ class RealMag extends Currency {
 		}
 
 		return $discount_value_formatted;
+	}
+
+	public static function getProductData($product){
+		$item_id = is_object( $product ) && method_exists($product,'get_id') ? $product->get_id() : $product;
+		return !empty( wc_get_product($item_id) ) && function_exists('wc_get_product') ? wc_get_product($item_id) : $product;
 	}
 
 }
