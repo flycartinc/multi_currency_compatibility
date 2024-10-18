@@ -53,7 +53,7 @@ if ( ! class_exists( '\WDR\Core\Helpers\Plugin' ) ) {
  */
 if ( ! function_exists( 'isWDRLatestVersion' ) ) {
 	function isWDRLatestVersion() {
-		$db_version = get_option( 'wdr_version', '' );
+		$db_version = get_option( 'wdr_db_version', '' );
 		if ( ! empty( $db_version ) ) {
 			return ( version_compare( $db_version, '2.9.99', '>=' ) );
 		}
