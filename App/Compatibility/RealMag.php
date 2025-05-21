@@ -155,7 +155,7 @@ class RealMag extends Currency {
 		}
 		$discount_value_formatted = $WOOCS->wc_price( $discount_value );
 		if ( $discount_type == 'flat' ) {
-			$discount_value_formatted .= ' ' . __( 'flat', 'woo-discount-rules' );
+			$discount_value_formatted .= ' ' . __( 'flat', 'multi_currency_compatibility' );
 		} elseif ( $range['discount_method'] == 'set' && $discount_type == 'fixed_set_price' ) {
 			$discount_value_formatted = wc_price( $discount_value );
 		}

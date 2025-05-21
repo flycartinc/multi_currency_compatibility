@@ -16,9 +16,17 @@
  * Contributors:        Ilaiyaraja
  * WC requires at least: 4.3
  * WC tested up to:     8.0
+ *  Requires Plugins:   woo-discount-rules
  */
 
 defined( 'ABSPATH' ) or die();
+
+// declare WooCommerce feature compatibility
+add_action('before_woocommerce_init', function () {
+	if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+	}
+});
 
 if(!function_exists('wdr_v2_is_plugin_active')){
 	function wdr_v2_is_plugin_active($plugin_file){

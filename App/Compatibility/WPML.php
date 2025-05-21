@@ -39,7 +39,7 @@ class WPML extends Currency
 		if( ! method_exists($woocommerce_wpml,'get_multi_currency')) return $price ;
 		$multi_currency = $woocommerce_wpml->get_multi_currency();
 		$form_currency_rate = $multi_currency->currencies[$from_currency]['rate'];
-		return (float) $price / $form_currency_rate;
+		return $form_currency_rate != 0 ? (float) $price / $form_currency_rate : $price;
 	}
 
     /**

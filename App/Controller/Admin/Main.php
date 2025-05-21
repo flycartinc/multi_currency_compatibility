@@ -77,11 +77,11 @@ class Main extends Base{
 		$suffix = '';
 		wp_register_style(WDR_PLUGIN_SLUG . '-alertify', WDR_PLUGIN_URL . 'assets/Admin/Css/alertify' . $suffix . '.css', array(), WDR_PLUGIN_VERSION . '&t=' . time());
 		wp_enqueue_style(WDR_PLUGIN_SLUG . '-alertify');
-		wp_register_script(WDR_PLUGIN_SLUG . '-alertify', WDR_PLUGIN_URL . 'assets/Admin/Js/alertify' . $suffix . '.js', array('jquery'), WDR_PLUGIN_VERSION . '&t=' . time());
+		wp_register_script(WDR_PLUGIN_SLUG . '-alertify', WDR_PLUGIN_URL . 'assets/Admin/Js/alertify' . $suffix . '.js', array('jquery'), WDR_PLUGIN_VERSION . '&t=' . time(),true);
 		wp_enqueue_script(WDR_PLUGIN_SLUG . '-alertify');
 		wp_register_style(WDRCS_PLUGIN_SLUG . '-style', WDRCS_PLUGIN_URL . 'Assets/Admin/Css/wdrcs-style.css', array(), WDRCS_PLUGIN_VERSION . '&t=' . time());
 		wp_enqueue_style(WDRCS_PLUGIN_SLUG . '-style');
-		wp_register_script(WDRCS_PLUGIN_SLUG . '-wdrcs-admin', WDRCS_PLUGIN_URL . 'Assets/Admin/Js/wdrcs-admin' . $suffix . '.js', array('jquery', WDR_PLUGIN_SLUG . '-alertify'), WDRCS_PLUGIN_VERSION . '&t=' . time());
+		wp_register_script(WDRCS_PLUGIN_SLUG . '-wdrcs-admin', WDRCS_PLUGIN_URL . 'Assets/Admin/Js/wdrcs-admin' . $suffix . '.js', array('jquery', WDR_PLUGIN_SLUG . '-alertify'), WDRCS_PLUGIN_VERSION . '&t=' . time(),true);
 		wp_enqueue_script(WDRCS_PLUGIN_SLUG . '-wdrcs-admin');
 
 		wp_localize_script(WDRCS_PLUGIN_SLUG . '-wdrcs-admin', 'wdrc_localized_data', array(
