@@ -16,7 +16,9 @@ class WPML extends Currency
      */
     function run()
     {
-        add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
+	    add_filter('wdr_gift_product_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
+	    add_filter('wdr_gift_discount_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
+	    add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10,2 );
 	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
 		add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
@@ -39,7 +41,7 @@ class WPML extends Currency
 		if( ! method_exists($woocommerce_wpml,'get_multi_currency')) return $price ;
 		$multi_currency = $woocommerce_wpml->get_multi_currency();
 		$form_currency_rate = $multi_currency->currencies[$from_currency]['rate'];
-		return (float) $price / $form_currency_rate;
+		return $form_currency_rate != 0 ? (float) $price / $form_currency_rate : $price;
 	}
 
     /**

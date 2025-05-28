@@ -20,6 +20,7 @@ class RealMag extends Currency {
 		add_filter( 'wdr_discounted_value_format', [ __CLASS__, 'getConvertedValue' ], 10, 2 );
 		add_filter( 'wdr_discount_product_data', [ __CLASS__, 'getProductData' ], 10, 1 );
 		add_filter( 'wdr_apply_coupon_discount_based_on_filters', '__return_false', 100 );
+		add_filter('wdr_calculator_shop_discount_using_cache','__return_false', 100 );
 		if ( Settings::get( 'suppress_other_discount_plugins' ) ) {
 			add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
 		}
@@ -155,7 +156,7 @@ class RealMag extends Currency {
 		}
 		$discount_value_formatted = $WOOCS->wc_price( $discount_value );
 		if ( $discount_type == 'flat' ) {
-			$discount_value_formatted .= ' ' . __( 'flat', 'woo-discount-rules' );
+			$discount_value_formatted .= ' ' . __( 'flat', 'multi_currency_compatibility' );
 		} elseif ( $range['discount_method'] == 'set' && $discount_type == 'fixed_set_price' ) {
 			$discount_value_formatted = wc_price( $discount_value );
 		}
