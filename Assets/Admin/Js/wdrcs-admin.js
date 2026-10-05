@@ -3,30 +3,74 @@ if (typeof (wdrc_jquery) == 'undefined') {
 }
 wdrc = window.wdrc || {};
 (function (wdrc) {
+
+    wdrc.showToast = function (type, message) {
+        var $toast = wdrc_jquery(
+            '<div class="wdrc-toast ' + type + '">'
+            + '<div class="wdrc-toast-content">'
+            + '<span class="wdrc-toast-msg"></span>'
+            + '</div>'
+            + '<button type="button" class="wdrc-toast-close dashicons dashicons-no-alt" aria-label="Close"></button>'
+            + '</div>'
+        );
+
+        $toast.find('.wdrc-toast-msg').text(message);
+
+        $toast.find('.wdrc-toast-close').on('click', function () {
+            $toast.remove();
+        });
+
+        wdrc_jquery('#wdrc-notification').append($toast);
+
+        setTimeout(function () {
+            $toast.remove();
+        }, 2000);
+    };
+
     wdrc.saveCompatibility = function () {
-        let data = wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form').serialize();
-        wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form #wdrc-save-button').attr('disabled', true);
+        var $button = wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form #wdrc-save-button');
+        var data = wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form').serialize()
+            + '&wdrc_nonce=' + encodeURIComponent(wdrc_localized_data.nonce);
+
+        $button.attr('disabled', true);
+
         wdrc_jquery.ajax({
             data: data,
             type: 'post',
             url: wdrc_localized_data.ajax_url,
-            error: function (request, error) {
-                wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form #wdrc-save-button').attr('disabled', false);
+
+            error: function () {
+                $button.attr('disabled', false);
+                wdrc.showToast(
+                    'error',
+                    wdrc_localized_data.i18n.saved_error
+                );
             },
+
             success: function (json) {
-                wdrc_jquery('#wdr-compatibility-main #wdrc-fields-form #wdrc-save-button').attr('disabled', false);
-                alertify.set('notifier', 'position', 'top-right');
+                $button.attr('disabled', false);
+
                 if (!json.success) {
-                    if (json.data.message) {
-                        alertify.error(json.data.message);
-                    }
-                } else {
-                    alertify.success(json.data.message);
-                    setTimeout(function () {
-                        location.reload();
-                    }, 800);
+                    wdrc.showToast(
+                        'error',
+                        json.data && json.data.message
+                            ? json.data.message
+                            : wdrc_localized_data.i18n.saved_error
+                    );
+
+                    return;
                 }
+
+                wdrc.showToast(
+                    'success',
+                    json.data.message
+                );
             }
         });
     };
+
+    wdrc_jquery(document).on('click', '#wdrc-save-button', function () {
+        wdrc.saveCompatibility();
+    });
+
 }(wdrc));
