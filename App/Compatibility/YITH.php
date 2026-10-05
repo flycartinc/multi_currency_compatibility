@@ -5,11 +5,14 @@ namespace WDRCS\App\Compatibility;
 use WDR\Core\Helpers\WC;
 use WDR\Core\Helpers\Settings;
 use WDRCS\App\Controller\Base;
-use WDRCS\App\Currency\Providers\WPWhamProvider;
+use WDRCS\App\Currency\Providers\YithMultiCurrencyProvider;
 
 defined('ABSPATH') || exit;
 
-class WPWham extends Currency
+/**
+ * Bridge for "YITH Multi Currency Switcher for WooCommerce".
+ */
+class YITH extends Currency
 {
 
     /**
@@ -28,6 +31,16 @@ class WPWham extends Currency
 	    }
     }
 
+	/**
+	 * Current exchange rate for whichever currency YITH has active.
+	 *
+	 * @return float
+	 */
+	protected static function getRate()
+	{
+		return YithMultiCurrencyProvider::getExchangeRate(YithMultiCurrencyProvider::getCurrentCurrency());
+	}
+
     /**
      * Converting cart coupon data. A dynamic WooCommerce coupon's `amount` is applied
      * directly against the cart's already display-currency total by WooCommerce's own
@@ -42,8 +55,7 @@ class WPWham extends Currency
         if (empty($coupon_data['amount'])) {
             return $coupon_data;
         }
-        $rate = WPWhamProvider::getExchangeRate(WPWhamProvider::getCurrentCurrency());
-        $coupon_data['amount'] = $coupon_data['amount'] * $rate;
+        $coupon_data['amount'] = $coupon_data['amount'] * self::getRate();
         return $coupon_data;
     }
 
@@ -64,7 +76,7 @@ class WPWham extends Currency
         if (empty($discount_value)) {
             return $discount_value_formatted;
         }
-        $rate = WPWhamProvider::getExchangeRate(WPWhamProvider::getCurrentCurrency());
+        $rate = self::getRate();
         $discount_value_formatted = WC::formatPrice((float)$discount_value * $rate);
         if ($discount_type == 'flat') {
             $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');

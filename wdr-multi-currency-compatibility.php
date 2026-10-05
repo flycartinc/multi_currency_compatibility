@@ -3,9 +3,9 @@
  * Plugin Name:         Discount rules : Multi-currency compatibility
  * Plugin URI:          https://www.flycart.org
  * Description:         Helpful to provide compatibility for Multi-currency plugins.
- * Version:             1.0.0
- * Requires at least:   5.3
- * Requires PHP:        5.6
+ * Version:             2.0.0
+ * Requires at least:   6.0
+ * Requires PHP:        7.4
  * Author:              Flycart
  * Author URI:          https://www.flycart.org
  * Slug:                wdr-multi-currency-compatibility
@@ -14,26 +14,11 @@
  * License:             GPL v3 or later
  * License URI:         https://www.gnu.org/licenses/gpl-3.0.html
  * Contributors:        Ilaiyaraja
- * WC requires at least: 4.3
- * WC tested up to:     8.0
+ * WC requires at least: 7.0
+ * WC tested up to:     10.2
  */
 
 defined( 'ABSPATH' ) or die();
-
-if(!function_exists('wdr_v2_is_plugin_active')){
-	function wdr_v2_is_plugin_active($plugin_file){
-		$active_plugins = apply_filters('active_plugins', get_option('active_plugins', array()));
-		if (is_multisite()) {
-			$active_plugins = array_merge($active_plugins, get_site_option('active_sitewide_plugins', array()));
-		}
-		return in_array($plugin_file, $active_plugins) || array_key_exists($plugin_file, $active_plugins);
-
-	}
-}
-
-if(function_exists('get_option') && get_option('advanced_woo_discount_rules_load_version') == 'v2' && wdr_v2_is_plugin_active('woo-discount-rules/woo-discount-rules.php')) {
-	return;
-}
 
 /**
  * Check woocommerce and Discount rules active or not.
@@ -64,27 +49,42 @@ if ( ! class_exists( '\WDR\Core\Helpers\Plugin' ) ) {
 }
 
 /**
- * Check discount rules plugin is latest.
+ * This addon only supports Discount Rules running in v3 (Core) mode. WDR's v2 engine has its own,
+ * separate, built-in currency-switcher compatibility (see
+ * v2/core/v2/App/Compatibility/*CurrencySwitcher*.php and MultiCurrencyByWPML.php/
+ * MultiCurrencyByTivNet.php in woo-discount-rules) and never fires any of the
+ * wdr_discount_get_product_price / wdr_discount_coupon_data / wdr_discounted_value_format /
+ * wdr_apply_coupon_discount_based_on_filters / wdr_suppress_allowed_hooks filters this addon
+ * hooks - so there is nothing for this addon to do under v2, and it must stay inactive there.
+ *
+ * Checked on the 'init' hook rather than here at top level: WordPress loads each active plugin's
+ * main file in alphabetical order of its folder name, and "wdr-multi-currency-compatibility"
+ * sorts before "woo-discount-rules" - so WDR_PLUGIN_VERSION / is_wdr_load_v2() are not guaranteed
+ * to exist yet if checked immediately here.
+ *
+ * @return bool
  */
-if ( ! function_exists( 'isWDRLatestVersion' ) ) {
-	function isWDRLatestVersion() {
-		$db_version = get_option( 'wdr_db_version', '' );
-		if ( ! empty( $db_version ) ) {
-			return ( version_compare( $db_version, '2.9.99', '>=' ) );
+if ( ! function_exists( 'wdrcsIsWdrV3Active' ) ) {
+	function wdrcsIsWdrV3Active() {
+		if ( function_exists( 'is_wdr_load_v2' ) && is_wdr_load_v2() ) {
+			return false;
 		}
+		if ( ! defined( 'WDR_PLUGIN_VERSION' ) ) {
+			return false;
+		}
+		// Strip any pre-release/build suffix (e.g. "3.0.0-RC2", "3.0.0-beta1") before comparing -
+		// version_compare() otherwise ranks a pre-release below its plain release.
+		$version = preg_replace( '/[-+].*$/', '', WDR_PLUGIN_VERSION );
 
-		return false;
+		return version_compare( $version, '3.0.0', '>=' );
 	}
-}
-if ( !isWDRLatestVersion() ) {
-	return;
 }
 
 /**
  * Plugin constants.
  */
 defined( 'WDRCS_PLUGIN_NAME' ) or define( 'WDRCS_PLUGIN_NAME', 'Multi-currency' );
-defined( 'WDRCS_PLUGIN_VERSION' ) or define( 'WDRCS_PLUGIN_VERSION', '1.0.0' );
+defined( 'WDRCS_PLUGIN_VERSION' ) or define( 'WDRCS_PLUGIN_VERSION', '2.0.0' );
 defined( 'WDRCS_PLUGIN_SLUG' ) or define( 'WDRCS_PLUGIN_SLUG', 'wdr-multi-currency-compatibility' );
 defined('WDRCS_PLUGIN_FILE') || define('WDRCS_PLUGIN_FILE', __FILE__);
 defined('WDRCS_PLUGIN_PATH') || define('WDRCS_PLUGIN_PATH', plugin_dir_path(__FILE__));
@@ -107,4 +107,11 @@ if (! method_exists(\WDRCS\App\Router::class, 'init')) return;
 
 register_activation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::activate');
 register_deactivation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::deactivate');
-\WDRCS\App\Router::init();
+
+add_action( 'init', function () {
+	if ( ! wdrcsIsWdrV3Active() ) {
+		return;
+	}
+	
+	\WDRCS\App\Router::init();
+} );

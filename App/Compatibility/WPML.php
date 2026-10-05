@@ -2,7 +2,10 @@
 
 namespace WDRCS\App\Compatibility;
 
+use WDR\Core\Helpers\Settings;
 use WDR\Core\Helpers\WC;
+use WDRCS\App\Controller\Base;
+use WDRCS\App\Currency\Providers\WcmlProvider;
 
 defined('ABSPATH') || exit;
 
@@ -16,46 +19,34 @@ class WPML extends Currency
      */
     function run()
     {
-        add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
-        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10,2 );
-	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
+        add_filter('wdr_discount_get_product_price', 'WDRCS\App\Controller\Base::getRawProductPrice', 10, 4);
+        add_filter('wdr_discount_coupon_data', [__CLASS__, 'getCouponData'], 10, 1);
+        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
 		add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
+	    if (Settings::get('suppress_other_discount_plugins')) {
+		    add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
+	    }
     }
 
 	/**
-	 * Converting price amount.
+	 * Converting cart coupon data. A dynamic WooCommerce coupon's `amount` is applied
+	 * directly against the cart's already display-currency total by WooCommerce's own
+	 * coupon math (not filtered by WCML), so it must be converted up from the
+	 * base-currency discount amount WDR computed it from - `wcml_raw_price_amount` is
+	 * WCML's own base-to-display conversion filter.
 	 *
-	 * @param int|float $price Item price.
-	 * @param string $from_currency
-	 * @param string $to_currency
+	 * @param array $coupon_data Coupon data.
 	 *
-	 * @return float|int
+	 * @return array
 	 */
-	public static function getCovertAmount($price, $from_currency , $to_currency) {
-		if (!is_numeric($price) || empty($price)) {
-			return $price;
+	static function getCouponData( array $coupon_data ) {
+		if ( empty( $coupon_data['amount'] ) ) {
+			return $coupon_data;
 		}
-		global $woocommerce_wpml;
-		if( ! method_exists($woocommerce_wpml,'get_multi_currency')) return $price ;
-		$multi_currency = $woocommerce_wpml->get_multi_currency();
-		$form_currency_rate = $multi_currency->currencies[$from_currency]['rate'];
-		return (float) $price / $form_currency_rate;
-	}
+		$coupon_data['amount'] = apply_filters( 'wcml_raw_price_amount', $coupon_data['amount'] );
 
-    /**
-     * Converting price amount.
-     *
-     * @param int|float $price Item price.
-     * @param string $discount_type Discount type.
-     * @return mixed|void
-     */
-    static function getConvertedPrice($price, string $discount_type)
-    {
-	    if (!is_numeric($price) || empty($price)) {
-            return $price;
-        }
-        return apply_filters('wcml_raw_price_amount', $price);
-    }
+		return $coupon_data;
+	}
 
     /**
      * Get converted value.
@@ -67,7 +58,7 @@ class WPML extends Currency
     static function getConvertedValue(string $discount_value_formatted, array $range): string
     {
         $discount_type = $range['discount_type'] ?? '';
-        $currency_code = self::getCurrentCurrencyCode();
+        $currency_code = WcmlProvider::getCurrentCurrency();
         if ($discount_type == 'percentage' || empty($currency_code)) {
             return $discount_value_formatted;
         }
@@ -80,24 +71,7 @@ class WPML extends Currency
         if ($discount_type == 'flat') {
             $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');
         }
-        $discount_value_formatted .= !empty($cart_discount_text) ? $cart_discount_text : '';
         return $discount_value_formatted;
-
-    }
-
-    /**
-     * Current currency code.
-     *
-     * @return mixed
-     */
-    static function getCurrentCurrencyCode()
-    {
-        global $woocommerce_wpml;
-        if (!empty($woocommerce_wpml) && method_exists($woocommerce_wpml, 'get_multi_currency') && method_exists($woocommerce_wpml, 'get_client_currency')) {
-            $multi_currency = $woocommerce_wpml->get_multi_currency();
-            return $multi_currency->get_client_currency();
-        }
-        return '';
     }
 
 }

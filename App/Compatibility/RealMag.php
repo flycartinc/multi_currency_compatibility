@@ -3,6 +3,8 @@
 namespace WDRCS\App\Compatibility;
 
 use WDR\Core\Helpers\Settings;
+use WDRCS\App\Controller\Base;
+use WDRCS\App\Currency\Providers\WoocsProvider;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,9 +16,8 @@ class RealMag extends Currency {
 	 * @return void
 	 */
 	function run() {
-		add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
-		add_filter( 'wdr_discount_get_fixed_price', [ __CLASS__, 'getConvertedPrice' ], 10, 2 );
-		add_filter( 'wdr_discounted_cart_item_price', [ __CLASS__, 'getCartConvertedPrice' ], 10, 2 );
+		add_filter( 'wdr_discount_get_product_price', 'WDRCS\App\Controller\Base::getRawProductPrice', 10, 4 );
+		add_filter( 'wdr_discount_coupon_data', [ __CLASS__, 'getCouponData' ], 10, 1 );
 		add_filter( 'wdr_discounted_value_format', [ __CLASS__, 'getConvertedValue' ], 10, 2 );
 		add_filter( 'wdr_discount_product_data', [ __CLASS__, 'getProductData' ], 10, 1 );
 		add_filter( 'wdr_apply_coupon_discount_based_on_filters', '__return_false', 100 );
@@ -25,107 +26,41 @@ class RealMag extends Currency {
 		}
 	}
 
-
 	/**
-	 * Converting price amount based on currency.
-	 *
-	 * @param float|int $price Item price.
-	 * @param string $from_currency
-	 * @param string $to_currency
-	 *
-	 * @return float|int
-	 */
-	static function getCovertAmount( $price, $from_currency, $to_currency) {
-
-		global $WOOCS;
-		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'convert_from_to_currency' )) {
-			return $price;
-		}
-		return $WOOCS->convert_from_to_currency( $price,$from_currency,$to_currency );
-	}
-
-	/**
-	 * Checks status for convert to current currency.
-	 *
-	 * @param \WOOCS $WOOCS Woocommerce currency switcher object.
-	 * @param bool $convert_to_current_currency Status for convert to current currency.
-	 *
-	 * @return bool
-	 */
-	public static function isConvertToCurrenctCurrency( \WOOCS $WOOCS, bool $convert_to_current_currency ) {
-		if ( ( isset( $WOOCS->is_geoip_manipulation ) && $WOOCS->is_geoip_manipulation )
-		     || ( isset( $WOOCS->is_multiple_allowed ) && $WOOCS->is_multiple_allowed )
-		     || ( isset( $WOOCS->woocs_is_fixed_enabled ) && $WOOCS->woocs_is_fixed_enabled ) ) {
-			$convert_to_current_currency = true;
-		}
-
-		return $convert_to_current_currency;
-	}
-
-	/**
-	 * Checks get_currencies method.
+	 * WOOCS only converts cart-facing prices when one of its own "convert to current
+	 * currency" flags is enabled (geoip manipulation, multiple currencies allowed, or
+	 * fixed-price mode).
 	 *
 	 * @param \WOOCS $WOOCS Woocommerce currency switcher object.
 	 *
 	 * @return bool
 	 */
-	public static function isCurrencyMethod( $WOOCS ) {
-		return ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' );
+	public static function isConvertToCurrentCurrency( \WOOCS $WOOCS ) {
+		return ( isset( $WOOCS->is_geoip_manipulation ) && $WOOCS->is_geoip_manipulation )
+			|| ( isset( $WOOCS->is_multiple_allowed ) && $WOOCS->is_multiple_allowed )
+			|| ( isset( $WOOCS->woocs_is_fixed_enabled ) && $WOOCS->woocs_is_fixed_enabled );
 	}
 
 	/**
-	 * Get currency conversion rate.
+	 * Converting cart coupon data. A dynamic WooCommerce coupon's `amount` is applied
+	 * directly against the cart's already display-currency total by WooCommerce's own
+	 * coupon math (not filtered by WOOCS), so it must be converted up from the
+	 * base-currency discount amount WDR computed it from - gated behind the same
+	 * "is WOOCS actually converting cart-facing prices" check this bridge already uses
+	 * for every other cart-facing amount.
 	 *
-	 * @return float|null
+	 * @param array $coupon_data Coupon data.
+	 *
+	 * @return array
 	 */
-	static function getConversionRate() {
+	static function getCouponData( array $coupon_data ) {
 		global $WOOCS;
-		if ( self::isCurrencyMethod( $WOOCS ) ) {
-			return null;
+		if ( empty( $coupon_data['amount'] ) || ! is_object( $WOOCS ) || ! self::isConvertToCurrentCurrency( $WOOCS ) ) {
+			return $coupon_data;
 		}
-		$current_currency = $WOOCS->current_currency;
-		$currencies       = $WOOCS->get_currencies();
+		$coupon_data['amount'] = $coupon_data['amount'] * WoocsProvider::getExchangeRate( WoocsProvider::getCurrentCurrency() );
 
-		return isset( $currencies[ $current_currency ]['rate'] ) ? $currencies[ $current_currency ]['rate'] : null;
-	}
-
-	/**
-	 * Converting price amount.
-	 *
-	 * @param float|int $price Item price.
-	 * @param string $discount_type
-	 *
-	 * @return float|int
-	 */
-	static function getConvertedPrice( $price, string $discount_type ) {
-		global $WOOCS;
-		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' ) ) {
-			return $price;
-		}
-		$currencies = $WOOCS->get_currencies();
-		return floatval($price) * floatval($currencies[$WOOCS->current_currency]['rate']);
-	}
-
-	/**
-	 * Converting price amount.
-	 *
-	 * @param float|int $price Item price.
-	 * @param array $cart_item Cart item.
-	 *
-	 * @return float|int
-	 */
-	static function getCartConvertedPrice( $price, array $cart_item ) {
-		global $WOOCS;
-		if ( empty( $price ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' ) ) {
-			return $price;
-		}
-		$convert_to_current_currency = self::isConvertToCurrenctCurrency( $WOOCS, false );
-		if ( ! $convert_to_current_currency ) {
-			return $price;
-		}
-		$rate = self::getConversionRate();
-
-		return ( $rate != 0 ) ? $price / $rate : $price;
+		return $coupon_data;
 	}
 
 	/**
@@ -146,16 +81,12 @@ class RealMag extends Currency {
 			return $discount_value_formatted;
 		}
 		global $WOOCS;
-		if ( self::isCurrencyMethod( $WOOCS ) ) {
-			return $discount_value_formatted;
-		}
-		$convert_to_current_currency = self::isConvertToCurrenctCurrency( $WOOCS, false );
-		if ( ! $convert_to_current_currency ) {
+		if ( empty( $WOOCS ) || ! is_object( $WOOCS ) || ! method_exists( $WOOCS, 'get_currencies' ) || ! self::isConvertToCurrentCurrency( $WOOCS ) ) {
 			return $discount_value_formatted;
 		}
 		$discount_value_formatted = $WOOCS->wc_price( $discount_value );
 		if ( $discount_type == 'flat' ) {
-			$discount_value_formatted .= ' ' . __( 'flat', 'woo-discount-rules' );
+			$discount_value_formatted .= ' ' . __( 'flat', 'wdr-multi-currency-compatibility' );
 		} elseif ( $range['discount_method'] == 'set' && $discount_type == 'fixed_set_price' ) {
 			$discount_value_formatted = wc_price( $discount_value );
 		}
@@ -163,9 +94,18 @@ class RealMag extends Currency {
 		return $discount_value_formatted;
 	}
 
-	public static function getProductData($product){
-		$item_id = is_object( $product ) && method_exists($product,'get_id') ? $product->get_id() : $product;
-		return !empty( wc_get_product($item_id) ) && function_exists('wc_get_product') ? wc_get_product($item_id) : $product;
+	/**
+	 * Re-fetches the product as a fresh WC_Product instance before WDR Core uses it for
+	 * shop-page pricing, so WOOCS's own price filter applies cleanly on read.
+	 *
+	 * @param \WC_Product|int $product Product object or ID.
+	 *
+	 * @return \WC_Product|int
+	 */
+	public static function getProductData( $product ) {
+		$item_id = is_object( $product ) && method_exists( $product, 'get_id' ) ? $product->get_id() : $product;
+
+		return function_exists( 'wc_get_product' ) && ! empty( wc_get_product( $item_id ) ) ? wc_get_product( $item_id ) : $product;
 	}
 
 }
