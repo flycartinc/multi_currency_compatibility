@@ -1,33 +1,239 @@
 #wdr-compatibility-main {
-  font-family: Helvetica, sans-serif, Arial, sans-serif;
-  margin-right: 15px;
-  background-color: rgba(248, 248, 252, 1);
-  padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 24px;
+  margin: 24px;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
   .wdrc-body {
     min-height: 60vh;
   }
+
+  .wdrc-main-title-container {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e4e4e7;
+  }
+
+  .wdrc-main-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    letter-spacing: -0.01em;
+    color: #18181b;
+  }
+
   .wdrc-fields-section {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
-  .wdrc-fields-save-section button {
+
+  .wdrc-compatible-field {
     display: flex;
-    justify-content: center;
-    cursor: pointer;
-    background-color: #0f172a;
-    padding: 10px 16px;
-    color: #FFF;
-    border-radius: 6px;
+    align-items: center;
+    width: 50%;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
   }
-  .wdrc-fields-save-section button:disabled {
-    opacity: 0.5;
-    pointer-events: none;
+
+  .wdrc-compatible-field-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wdrc-compatible-field-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .wdrc-compatible-field-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #18181b;
+  }
+
+  .wdrc-compatible-field-author {
+    font-size: 12px;
+    color: #71717a;
+  }
+
+  .wdrc-compatible-field-desc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 18px;
+    color: #71717a;
+  }
+
+  // Toggle switch (checkbox visually restyled as a switch)
+  .wdrc-toggle-switch {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    cursor: pointer;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+
+      &:checked + .wdrc-toggle-slider {
+        background: #0f172a;
+
+        &::before {
+          transform: translateX(18px);
+        }
+      }
+
+      &:focus-visible + .wdrc-toggle-slider {
+        outline: 2px solid #0f172a;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .wdrc-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #d4d4d8;
+    border-radius: 999px;
+    transition: background-color 0.15s ease;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease;
+    }
+  }
+
+  .wdrc-fields-save-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 20px;
+
+    button {
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+      background-color: #0f172a;
+      padding: 10px 16px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+
+      &:disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+    }
   }
 }
-.alertify-notifier .ajs-message.ajs-success{
-  color: #fff;
+
+// Toast notifications shown after saving settings
+.wdrc-notification {
+  position: fixed;
+  top: 40px;
+  right: 24px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 360px;
+}
+
+.wdrc-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  animation: wdrc-toast-in 0.2s ease-out;
+
+  &.success {
+    background: #15803d;
+  }
+
+  &.error {
+    background: #b91c1c;
+  }
+
+  .wdrc-toast-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wdrc-toast-msg {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 19px;
+    color: #fff;
+  }
+
+  .wdrc-toast-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+  }
+}
+
+@keyframes wdrc-toast-in {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .wdrc-notification {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
 }

@@ -2,14 +2,14 @@
 
 namespace WDRCS\App\Compatibility;
 
-use WDRCS\App\Currency\Providers\WPWhamProvider;
+use WDRCS\App\Currency\Providers\YithMultiCurrencyProvider;
 
 defined('ABSPATH') || exit;
 
 /**
- * Bridge for "Currency Switcher for WooCommerce by WPWham".
+ * Bridge for "YITH Multi Currency Switcher for WooCommerce".
  */
-class WPWham extends Currency
+class YITH extends Currency
 {
     /**
      * Initiates action.
@@ -23,6 +23,6 @@ class WPWham extends Currency
 
     protected static function provider()
     {
-        return WPWhamProvider::class;
+        return YithMultiCurrencyProvider::class;
     }
 }
