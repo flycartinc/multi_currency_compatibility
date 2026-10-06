@@ -1,7 +1,6 @@
 <?php
 namespace WDRCS\App\Controller;
 
-use WDR\Core\Helpers\Settings;
 use WDRCS\App\Currency\Providers\AeliaCurrencyProvider;
 use WDRCS\App\Currency\Providers\WcmlProvider;
 use WDRCS\App\Currency\Providers\WoocsProvider;
@@ -124,38 +123,6 @@ class Base {
 		}
 
 		return $hooks;
-	}
-
-	/**
-	 * Shared `wdr_discount_get_product_price` bridge for every currency-switcher
-	 * compatibility class. WDR Core's `Discount::getProductPrice()` reads
-	 * `get_price()` / `get_regular_price()` in view context, which lets the active
-	 * currency-switcher plugin's own price filter silently convert the reference price
-	 * before WDR ever sees it - WDR then does its discount math on that already-converted
-	 * number and later writes the (still-tainted) result back onto the product object,
-	 * where the switcher's filter converts it a second time on the next read. Returning
-	 * the raw, unfiltered price here keeps WDR's internal math 100% base-currency, so the
-	 * switcher only ever converts once, at display time - matching how `_regular_price`
-	 * and `_sale_price` are stored.
-	 *
-	 * @param float|int  $price     Product price as WDR Core resolved it (already switcher-converted).
-	 * @param \WC_Product $product  Product object.
-	 * @param int|string $source_id Source identifier.
-	 * @param string     $context   Discount calculation context.
-	 *
-	 * @return float
-	 */
-	static function getRawProductPrice( $price, $product, $source_id, $context ) {
-		if ( ! $product instanceof \WC_Product ) {
-			return $price;
-		}
-		if ( Settings::get( 'calculate_discount_from' ) === 'regular_price' ) {
-			$raw_price = $product->get_regular_price( 'edit' );
-		} else {
-			$raw_price = $product->get_price( 'edit' );
-		}
-
-		return is_numeric( $raw_price ) ? (float) $raw_price : $price;
 	}
 
 }
