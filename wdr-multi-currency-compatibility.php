@@ -38,16 +38,6 @@ if (! isWooAndWDRActive()) {
 	return;
 }
 
-if ( ! class_exists( '\WDR\Core\Helpers\Plugin' ) && file_exists( WP_PLUGIN_DIR . '/woo-discount-rules/vendor/autoload.php' ) ) {
-	require_once WP_PLUGIN_DIR . '/woo-discount-rules/vendor/autoload.php';
-} elseif ( file_exists( WP_PLUGIN_DIR . '/woo-discount-rules-pro/vendor/autoload.php' ) ) {
-	require_once WP_PLUGIN_DIR . '/woo-discount-rules-pro/vendor/autoload.php';
-}
-
-if ( ! class_exists( '\WDR\Core\Helpers\Plugin' ) ) {
-	return;
-}
-
 /**
  * This addon only supports Discount Rules running in v3 (Core) mode. WDR's v2 engine has its own,
  * separate, built-in currency-switcher compatibility (see
@@ -108,8 +98,10 @@ if (! method_exists(\WDRCS\App\Router::class, 'init')) return;
 register_activation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::activate');
 register_deactivation_hook(WDRCS_PLUGIN_FILE, 'WDRCS\App\Controller\Admin\Main::deactivate');
 
+// WDR's own autoloader is never loaded from here: in v2 mode WDR leaves it unloaded on purpose (a v2.x free plugin returns early
+// once \WDR\Pro\Route resolves), and in v3 mode WDR has registered it by 'init'.
 add_action( 'init', function () {
-	if ( ! wdrcsIsWdrV3Active() ) {
+	if ( ! wdrcsIsWdrV3Active() || ! class_exists( '\WDR\Core\Helpers\Plugin' ) ) {
 		return;
 	}
 	
