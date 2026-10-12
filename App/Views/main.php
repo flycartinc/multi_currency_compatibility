@@ -18,7 +18,6 @@ defined('ABSPATH') || exit;
             <div class="wdrc-fields">
                 <form action="" name="wdrc-fields-form" id="wdrc-fields-form" method="post">
                     <input type="hidden" name="action" value="wdrc_save_compatibility">
-                    <input type="hidden" name="option_key" value="<?php echo esc_attr($option_key ?? ''); ?>">
                     <div style="display: flex;flex-direction: column;gap: 1rem;">
                         <div class="wdrc-fields-section">
                             <?php

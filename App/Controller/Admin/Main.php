@@ -23,7 +23,6 @@ class Main extends Base{
 		if ($addon != 'multi_currency') return;
 		$params = array(
 			'fields' => self::getList(),
-			'option_key' => self::$option_key,
 		);
 		$path = WDRCS_PLUGIN_PATH . 'App/Views/main.php';
 		Util::renderTemplate($path, $params);
@@ -107,14 +106,9 @@ class Main extends Base{
 			wp_send_json($response);
 		}
 		$compatibility = Input::get('wdrc_compatibility', [], 'post');
-		$option_key = Input::get('option_key', '', 'post');
-		$option_key = preg_replace('/[^A-Za-z\d_\-]/', '', $option_key);
-		if (empty($option_key)) {
-			$response['data']['message'] = __('Compatibility not saved.', 'wdr-multi-currency-compatibility');
-			wp_send_json($response);
-		}
 		$compatibility = !empty($compatibility) ? array_map('absint', $compatibility) : $compatibility;
-		update_option($option_key, $compatibility);
+		// always the add-on's own option: a posted option name would let the request overwrite any option (siteurl …)
+		update_option(self::$option_key, $compatibility);
 		$response['success'] = true;
 		$response['data']['message'] = __('Compatibility saved successfully.', 'wdr-multi-currency-compatibility');
 		wp_send_json($response);
