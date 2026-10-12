@@ -37,7 +37,10 @@ abstract class Currency
      */
     protected function registerHooks()
     {
-        add_filter('wdr_custom_price_convert', [static::class, 'getCovertAmount'], 10, 3);
+        add_filter('wdr_custom_price_convert', [static::class, 'getCovertAmount'], 10, 4);
+        // before WooCommerce's own save of the order — classic checkout and Store API
+        add_action('woocommerce_checkout_create_order', [static::class, 'saveOrderRate']);
+        add_action('woocommerce_store_api_checkout_update_order_meta', [static::class, 'saveOrderRate']);
         add_filter('wdr_discount_get_fixed_price', [static::class, 'getConvertedPrice'], 10, 2);
         add_filter('wdr_discounted_cart_item_price', [static::class, 'getCartConvertedPrice'], 10, 2);
         add_filter('wdr_discount_coupon_data', [static::class, 'getCouponData'], 10, 1);
@@ -99,22 +102,42 @@ abstract class Currency
     }
 
     /**
-     * Convert an amount from $from_currency into the store's base currency.
+     * Convert a past order's amount from $from_currency into the store's base currency — at the rate saved on
+     * the order at checkout (saveOrderRate()); an order from before that keeps today's rate.
      *
      * @param int|float $price Amount in $from_currency.
      * @param string $from_currency Currency code the amount is in.
      * @param string $to_currency Store currency code.
+     * @param float|string|null $order_rate The rate saved on the order, when known.
      *
      * @return float|int
      */
-    static function getCovertAmount($price, $from_currency, $to_currency)
+    static function getCovertAmount($price, $from_currency, $to_currency, $order_rate = null)
     {
         if (empty($price) || empty($from_currency) || $from_currency === $to_currency) {
             return $price;
         }
-        $rate = static::getRateOf($from_currency);
+        $rate = (float)$order_rate > 0 ? (float)$order_rate : static::getRateOf($from_currency);
 
         return $rate > 0 ? (float)$price / $rate : $price;
+    }
+
+    /**
+     * Set the order currency's rate on the order at checkout (classic and Store API), so the purchase-history
+     * conditions convert it back at that rate later, not at the day's rate. Discount Rules reads it with the
+     * order totals in one query (\WDR\Core\Models\WC\Order::EXCHANGE_RATE_META). Hooked before WooCommerce
+     * saves the order, so no save here: a save_meta_data() could trigger a second full order save (HPOS).
+     *
+     * @param \WC_Order $order Order.
+     *
+     * @return void
+     */
+    static function saveOrderRate($order)
+    {
+        if (!$order instanceof \WC_Order || $order->get_currency() === get_option('woocommerce_currency')) {
+            return;
+        }
+        $order->update_meta_data('_wdr_exchange_rate', static::getRateOf($order->get_currency()));
     }
 
     /**
