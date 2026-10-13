@@ -34,10 +34,6 @@ class YithMultiCurrencyProvider extends AbstractCurrencyProvider {
 		return self::sanitizeRate( $currency->get_rate() );
 	}
 
-	public static function getCurrentCurrency() {
-		return function_exists( 'yith_wcmcs_get_current_currency_id' ) ? yith_wcmcs_get_current_currency_id() : parent::getCurrentCurrency();
-	}
-
 	/**
 	 * Get the exchange rate recorded on the order.
 	 *

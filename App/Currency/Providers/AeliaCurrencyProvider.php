@@ -45,7 +45,7 @@ class AeliaCurrencyProvider extends AbstractCurrencyProvider {
 		}
 
 		// If currency matches the base currency, the exchange rate is always 1.0.
-		$base_currency = get_option( 'woocommerce_currency' );
+		$base_currency = \WDR\Core\Helpers\WC::getStoreCurrency();
 		if ( $currency_code === $base_currency ) {
 			return 1.0;
 		}
@@ -99,25 +99,6 @@ class AeliaCurrencyProvider extends AbstractCurrencyProvider {
 	}
 
 	/**
-	 * Get the currency code this provider currently has applied for the visitor/session.
-	 *
-	 * @return string
-	 */
-	public static function getCurrentCurrency() {
-		if ( class_exists( '\Aelia\WC\CurrencySwitcher\WC_Aelia_CurrencySwitcher' ) ) {
-			$instance = \Aelia\WC\CurrencySwitcher\WC_Aelia_CurrencySwitcher::instance();
-			if ( $instance && method_exists( $instance, 'get_selected_currency' ) ) {
-				$currency = $instance->get_selected_currency();
-				if ( ! empty( $currency ) ) {
-					return $currency;
-				}
-			}
-		}
-
-		return parent::getCurrentCurrency();
-	}
-
-	/**
 	 * Get the exchange rate this provider recorded on $order at the time it was placed.
 	 *
 	 * Aelia saves the exchange rate to convert order_currency -> base_currency in the order
@@ -139,7 +120,7 @@ class AeliaCurrencyProvider extends AbstractCurrencyProvider {
 			return null;
 		}
 
-		$base_currency = get_option( 'woocommerce_currency' );
+		$base_currency = \WDR\Core\Helpers\WC::getStoreCurrency();
 		if ( $order_currency === $base_currency ) {
 			return 1.0;
 		}

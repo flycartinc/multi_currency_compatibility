@@ -84,7 +84,7 @@ abstract class Currency
     {
         $provider = static::provider();
 
-        return $provider::getExchangeRate($provider::getCurrentCurrency());
+        return $provider::getExchangeRate(WC::getCurrentCurrency());
     }
 
     /**
@@ -134,7 +134,7 @@ abstract class Currency
      */
     static function saveOrderRate($order)
     {
-        if (!$order instanceof \WC_Order || $order->get_currency() === get_option('woocommerce_currency')) {
+        if (!$order instanceof \WC_Order || $order->get_currency() === WC::getStoreCurrency()) {
             return;
         }
         $order->update_meta_data('_wdr_exchange_rate', static::getRateOf($order->get_currency()));

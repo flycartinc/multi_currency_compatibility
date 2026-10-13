@@ -52,12 +52,6 @@ class WooMultiCurrencyProvider extends AbstractCurrencyProvider {
 		return ! empty( $rate ) ? $rate : 1.0;
 	}
 
-	public static function getCurrentCurrency() {
-		$instance = self::getInstance();
-
-		return $instance && method_exists( $instance, 'get_current_currency' ) ? $instance->get_current_currency() : parent::getCurrentCurrency();
-	}
-
 	/**
 	 * Get the exchange rate recorded on the order.
 	 *

@@ -31,7 +31,8 @@ abstract class AbstractCurrencyProvider implements CurrencyProviderInterface {
 	 * @return string
 	 */
 	public static function getCurrentCurrency() {
-		return function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '';
+		// the currency WooCommerce prices the cart and order in — the same one Discount Rules' Core reads (WC helper)
+		return \WDR\Core\Helpers\WC::getCurrentCurrency();
 	}
 
 	/**

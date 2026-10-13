@@ -33,12 +33,6 @@ class WoocsProvider extends AbstractCurrencyProvider {
 		return isset( $currencies[ $currency_code ]['rate'] ) ? self::sanitizeRate( $currencies[ $currency_code ]['rate'] ) : 1.0;
 	}
 
-	public static function getCurrentCurrency() {
-		global $WOOCS;
-
-		return ! empty( $WOOCS->current_currency ) ? $WOOCS->current_currency : parent::getCurrentCurrency();
-	}
-
 	/**
 	 * WOOCS saves the rate it applied on `woocommerce_checkout_update_order_meta` as order
 	 * meta `_woocs_order_rate`. Reading it back is a plain postmeta read on the WC_Order

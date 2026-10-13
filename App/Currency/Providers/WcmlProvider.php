@@ -47,13 +47,6 @@ class WcmlProvider extends AbstractCurrencyProvider {
 		return self::sanitizeRate( $wcml_settings['currency_options'][ $currency_code ]['rate'] );
 	}
 
-	public static function getCurrentCurrency() {
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-		$currency = apply_filters( 'wcml_price_currency', null );
-
-		return ! empty( $currency ) ? $currency : parent::getCurrentCurrency();
-	}
-
 	/**
 	 * WCML doesn't persist a rate snapshot on the order itself - it only stores the
 	 * order's currency (WooCommerce's own `_order_currency` meta, exposed via

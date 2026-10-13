@@ -29,10 +29,6 @@ class WPWhamProvider extends AbstractCurrencyProvider {
 		return self::sanitizeRate( alg_wc_cs_get_currency_exchange_rate( $currency_code ) );
 	}
 
-	public static function getCurrentCurrency() {
-		return function_exists( 'alg_get_current_currency_code' ) ? alg_get_current_currency_code() : parent::getCurrentCurrency();
-	}
-
 	// getOrderExchangeRate() is intentionally not overridden: WPWham doesn't persist a rate
 	// snapshot on the order, so no reliable per-order rate is available - this falls back to
 	// AbstractCurrencyProvider's default (null), the same limitation the old per-class
