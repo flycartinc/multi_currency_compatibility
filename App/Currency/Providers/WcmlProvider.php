@@ -8,8 +8,8 @@ use WDR\Core\Helpers\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Provider for WPML's WooCommerce Multilingual & Multicurrency (WCML)
- * currency options, read directly from the stored plugin settings.
+ * Provider for WPML's WooCommerce Multilingual & Multicurrency (WCML): the rates WCML prices with
+ * (its rate table, `wcml_exchange_rates` filter included).
  */
 class WcmlProvider extends AbstractCurrencyProvider {
 
@@ -38,7 +38,23 @@ class WcmlProvider extends AbstractCurrencyProvider {
 			&& (int) $wcml_settings['enable_multi_currency'] === 2;
 	}
 
+	/**
+	 * The rate WCML prices with: its own rate table, which runs the `wcml_exchange_rates` filter (a snippet may change a rate
+	 * there); the stored setting only when WCML's multi-currency object is not loaded.
+	 *
+	 * @param string $currency_code Currency code.
+	 *
+	 * @return float
+	 */
 	public static function getExchangeRate( $currency_code ) {
+		global $woocommerce_wpml;
+		if ( isset( $woocommerce_wpml->multi_currency ) && method_exists( $woocommerce_wpml->multi_currency, 'get_exchange_rates' ) ) {
+			$rates = (array) $woocommerce_wpml->multi_currency->get_exchange_rates();
+			if ( isset( $rates[ $currency_code ] ) ) {
+				return self::sanitizeRate( $rates[ $currency_code ] );
+			}
+		}
+
 		$wcml_settings = get_option( '_wcml_settings' );
 		if ( ! is_array( $wcml_settings ) || ! isset( $wcml_settings['currency_options'][ $currency_code ]['rate'] ) ) {
 			return 1.0;
