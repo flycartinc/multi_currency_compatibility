@@ -191,11 +191,11 @@ abstract class Currency
         if (empty($coupon_data['amount']) || ($coupon_data['discount_type'] ?? '') === 'percent') {
             return $coupon_data;
         }
+        // WooCommerce splits a fixed_cart amount in cents and turns a leftover fraction of a cent into a
+        // whole cent (10 % of $3.54 = 0.354 → −$0.36, where its percent coupon gives −$0.35): the amount at the
+        // visitor currency's precision — before the divide-back, so the switcher's conversion lands on it
+        $coupon_data['amount'] = round((float)$coupon_data['amount'], wc_get_price_decimals());
         if (!static::convertsCouponAmount()) {
-            // WooCommerce splits a fixed_cart amount in cents and turns a leftover fraction of a cent into a
-            // whole cent (10 % of $3.54 = 0.354 → −$0.36, where its percent coupon gives −$0.35)
-            $coupon_data['amount'] = round((float)$coupon_data['amount'], wc_get_price_decimals());
-
             return $coupon_data;
         }
         $rate = static::getRate();
