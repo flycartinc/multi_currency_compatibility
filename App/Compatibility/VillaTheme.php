@@ -2,7 +2,6 @@
 
 namespace WDRCS\App\Compatibility;
 
-use WDR\Core\Controllers\Store\Product;
 use WDR\Core\Modules\Store\Calculator;
 use WDRCS\App\Currency\Providers\WooMultiCurrencyProvider;
 
@@ -41,20 +40,6 @@ class VillaTheme extends Currency
             add_filter('woocommerce_coupon_get_amount', [__CLASS__, 'getCouponAmount'], 11, 2);
             // after Discount Rules' price HTML (priority 100)
             add_filter('woocommerce_get_price_html', [__CLASS__, 'addApproximatePrice'], 101, 2);
-        }
-    }
-
-    /**
-     * CURCY's cache-compatible mode re-renders product prices in an admin-ajax request (`wmc_get_products_price`), where
-     * Discount Rules' storefront hooks are not loaded: add its price HTML filters for that request.
-     *
-     * @return void
-     */
-    static function addPriceHtmlHooks()
-    {
-        if (!has_filter('woocommerce_get_price_html', [Product::class, 'getPriceHtml'])) {
-            add_filter('woocommerce_get_price_html', [Product::class, 'getPriceHtml'], 100, 2);
-            add_filter('woocommerce_variable_price_html', [Product::class, 'getVariablePriceHtml'], 100, 2);
         }
     }
 

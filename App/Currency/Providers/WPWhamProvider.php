@@ -3,13 +3,12 @@
 namespace WDRCS\App\Currency\Providers;
 
 use WDRCS\App\Currency\AbstractCurrencyProvider;
-use WDR\Core\Helpers\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Provider for "Currency Switcher for WooCommerce" by WPWham (Alg WC Currency Switcher).
- * Plugin folder: currency-switcher-woocommerce
+ * Provider for "Currency Switcher for WooCommerce" by WPWham (Alg WC Currency Switcher) — free
+ * (`currency-switcher-woocommerce`) or Pro (`currency-switcher-woocommerce-pro`, free stands down when it is active).
  */
 class WPWhamProvider extends AbstractCurrencyProvider {
 
@@ -17,8 +16,13 @@ class WPWhamProvider extends AbstractCurrencyProvider {
 		return 'wpwham_currency_switcher';
 	}
 
+	/**
+	 * Its runtime, from whichever edition loaded it (plugins_loaded).
+	 *
+	 * @return bool
+	 */
 	public static function isActive() {
-		return Plugin::isActive( 'currency-switcher-woocommerce/currency-switcher-woocommerce.php' );
+		return self::isPluginLoaded();
 	}
 
 	public static function getExchangeRate( $currency_code ) {

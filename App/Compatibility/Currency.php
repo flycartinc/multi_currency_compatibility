@@ -2,6 +2,7 @@
 
 namespace WDRCS\App\Compatibility;
 
+use WDR\Core\Controllers\Store\Product;
 use WDR\Core\Helpers\Settings;
 use WDR\Core\Helpers\WC;
 
@@ -48,6 +49,21 @@ abstract class Currency
         add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
         if (Settings::get('suppress_other_discount_plugins')) {
             add_filter('wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1);
+        }
+    }
+
+    /**
+     * A switcher's cache mode re-renders product prices in an admin-ajax request (CURCY `wmc_get_products_price`, FOX
+     * `woocs_get_products_price_html`), where Discount Rules' storefront hooks are not loaded: add its price HTML filters for
+     * that request.
+     *
+     * @return void
+     */
+    static function addPriceHtmlHooks()
+    {
+        if (!has_filter('woocommerce_get_price_html', [Product::class, 'getPriceHtml'])) {
+            add_filter('woocommerce_get_price_html', [Product::class, 'getPriceHtml'], 100, 2);
+            add_filter('woocommerce_variable_price_html', [Product::class, 'getVariablePriceHtml'], 100, 2);
         }
     }
 

@@ -3,13 +3,12 @@
 namespace WDRCS\App\Currency\Providers;
 
 use WDRCS\App\Currency\AbstractCurrencyProvider;
-use WDR\Core\Helpers\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Provider for "WooCommerce Currency Switcher" (WOOCS) by realmag777.
- * Plugin folder: woocommerce-currency-switcher
+ * Provider for "WooCommerce Currency Switcher" (WOOCS) by realmag777 — FOX free and FOX Professional (one codebase,
+ * class WOOCS, in any plugin folder).
  */
 class WoocsProvider extends AbstractCurrencyProvider {
 
@@ -17,8 +16,14 @@ class WoocsProvider extends AbstractCurrencyProvider {
 		return 'realmag_currency_switcher';
 	}
 
+	/**
+	 * FOX's object, built when its plugin file loads: the free folder `woocommerce-currency-switcher` or a premium build in
+	 * another one. Not built on the pages FOX's own settings switch it off for.
+	 *
+	 * @return bool
+	 */
 	public static function isActive() {
-		return Plugin::isActive( 'woocommerce-currency-switcher/index.php' );
+		return isset( $GLOBALS['WOOCS'] ) && $GLOBALS['WOOCS'] instanceof \WOOCS;
 	}
 
 	public static function getExchangeRate( $currency_code ) {
