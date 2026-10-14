@@ -2,3 +2,4 @@
 composer.lock
 vendor
 Assets/Admin/Css/wdrcs-style.css.map
+wp-stubs
