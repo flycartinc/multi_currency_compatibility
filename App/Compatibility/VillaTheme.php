@@ -157,23 +157,4 @@ class VillaTheme extends Currency
 
         return (self::$prices[spl_object_hash($product)] ?? null) !== (string)$price;
     }
-
-    /**
-     * Our dynamic coupon's fixed amount as Discount Rules set it (pro: in the visitor's currency), not CURCY's rounded
-     * conversion of it.
-     *
-     * @param mixed $amount Amount after CURCY's conversion.
-     * @param \WC_Coupon $coupon Coupon.
-     *
-     * @return mixed
-     */
-    static function getCouponAmount($amount, $coupon)
-    {
-        if (!$coupon instanceof \WC_Coupon || $coupon->get_id() || $coupon->is_type('percent')
-            || empty(Calculator::getCartCouponDiscount((string)$coupon->get_code()))) {
-            return $amount;
-        }
-
-        return $coupon->get_amount('edit');
-    }
 }

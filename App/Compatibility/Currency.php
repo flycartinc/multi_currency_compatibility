@@ -3,6 +3,7 @@
 namespace WDRCS\App\Compatibility;
 
 use WDR\Core\Controllers\Store\Product;
+use WDR\Core\Modules\Store\Calculator;
 use WDR\Core\Helpers\Settings;
 use WDR\Core\Helpers\WC;
 
@@ -220,6 +221,25 @@ abstract class Currency
         }
 
         return $coupon_data;
+    }
+
+    /**
+     * Our dynamic coupon's fixed amount as Discount Rules set it (in the visitor's currency), not the switcher's (rounded)
+     * conversion of it — for a switcher that keeps our amount (convertsCouponAmount() false) but converts every coupon.
+     *
+     * @param mixed $amount Amount after the switcher's conversion.
+     * @param \WC_Coupon $coupon Coupon.
+     *
+     * @return mixed
+     */
+    static function getCouponAmount($amount, $coupon)
+    {
+        if (!$coupon instanceof \WC_Coupon || $coupon->get_id() || $coupon->is_type('percent')
+            || empty(Calculator::getCartCouponDiscount((string)$coupon->get_code()))) {
+            return $amount;
+        }
+
+        return $coupon->get_amount('edit');
     }
 
     /**
