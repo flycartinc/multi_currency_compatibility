@@ -3,7 +3,6 @@
 namespace WDRCS\App\Currency\Providers;
 
 use WDRCS\App\Currency\AbstractCurrencyProvider;
-use WDR\Core\Helpers\Plugin;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -23,12 +22,12 @@ class AeliaCurrencyProvider extends AbstractCurrencyProvider {
 	}
 
 	/**
-	 * Whether the currency-switcher plugin this provider targets is active/loaded.
+	 * Its runtime, in whichever folder the plugin is installed (it builds the class when its plugin file loads).
 	 *
 	 * @return bool
 	 */
 	public static function isActive() {
-		return Plugin::isActive( 'woocommerce-aelia-currencyswitcher/woocommerce-aelia-currencyswitcher.php' );
+		return class_exists( '\Aelia\WC\CurrencySwitcher\WC_Aelia_CurrencySwitcher' );
 	}
 
 	/**
