@@ -23,6 +23,20 @@ defined('ABSPATH') || exit;
  */
 abstract class Currency
 {
+    /**
+     * Discount Rules' storefront AJAX actions: the price HTML, tables, bars, cart variants, gifts and cross-sells.
+     */
+    const STOREFRONT_AJAX_ACTIONS = [
+        'wdr_get_price_html',
+        'wdr_ajax_get_variable_product_discount_table',
+        'wdr_ajax_get_variable_product_discount_bar',
+        'wdr_ajax_cart_item_variants',
+        'wdr_ajax_change_cart_item_variant',
+        'wdr_ajax_gift_details',
+        'wdr_ajax_add_gift_product',
+        'wdr_ajax_cross_sells',
+    ];
+
     abstract function run();
 
     /**
@@ -234,12 +248,24 @@ abstract class Currency
      */
     static function getCouponAmount($amount, $coupon)
     {
-        if (!$coupon instanceof \WC_Coupon || $coupon->get_id() || $coupon->is_type('percent')
-            || empty(Calculator::getCartCouponDiscount((string)$coupon->get_code()))) {
+        if (!static::isOurCoupon($coupon) || $coupon->is_type('percent')) {
             return $amount;
         }
 
         return $coupon->get_amount('edit');
+    }
+
+    /**
+     * Whether a coupon is one of Discount Rules' dynamic coupons (virtual, with a cart discount behind it).
+     *
+     * @param mixed $coupon Coupon.
+     *
+     * @return bool
+     */
+    protected static function isOurCoupon($coupon)
+    {
+        return $coupon instanceof \WC_Coupon && !$coupon->get_id()
+            && !empty(Calculator::getCartCouponDiscount((string)$coupon->get_code()));
     }
 
     /**

@@ -33,16 +33,7 @@ class WPML extends Currency
      */
     public static function addAjaxActions($actions)
     {
-        return array_merge((array)$actions, [
-            'wdr_get_price_html',
-            'wdr_ajax_get_variable_product_discount_table',
-            'wdr_ajax_get_variable_product_discount_bar',
-            'wdr_ajax_cart_item_variants',
-            'wdr_ajax_change_cart_item_variant',
-            'wdr_ajax_gift_details',
-            'wdr_ajax_add_gift_product',
-            'wdr_ajax_cross_sells',
-        ]);
+        return array_merge((array)$actions, self::STOREFRONT_AJAX_ACTIONS);
     }
 
     /**
