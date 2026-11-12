@@ -24,7 +24,8 @@ defined('ABSPATH') || exit;
 abstract class Currency
 {
     /**
-     * Discount Rules' storefront AJAX actions: the price HTML, tables, bars, cart variants, gifts and cross-sells.
+     * Discount Rules' storefront AJAX actions: the price HTML, tables, bars, cart variants and gifts (the
+     * cross-sells list runs on WooCommerce's front-end AJAX since WDR pending-task-final 192: a storefront request already).
      */
     const STOREFRONT_AJAX_ACTIONS = [
         'wdr_get_price_html',
@@ -34,7 +35,6 @@ abstract class Currency
         'wdr_ajax_change_cart_item_variant',
         'wdr_ajax_gift_details',
         'wdr_ajax_add_gift_product',
-        'wdr_ajax_cross_sells',
     ];
 
     abstract function run();
