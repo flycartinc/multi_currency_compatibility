@@ -86,7 +86,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 if(! class_exists(\WDRCS\App\Router::class)) return;
 
-$myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+$myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v6\PucFactory::buildUpdateChecker(
     'https://github.com/flycartinc/multi_currency_compatibility',
     __FILE__,
     'wdr-multi-currency-compatibility'
