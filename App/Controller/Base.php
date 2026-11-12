@@ -1,6 +1,13 @@
 <?php
 namespace WDRCS\App\Controller;
 
+use WDRCS\App\Currency\Providers\AeliaCurrencyProvider;
+use WDRCS\App\Currency\Providers\WcmlProvider;
+use WDRCS\App\Currency\Providers\WoocsProvider;
+use WDRCS\App\Currency\Providers\WooMultiCurrencyProvider;
+use WDRCS\App\Currency\Providers\WPWhamProvider;
+use WDRCS\App\Currency\Providers\YithMultiCurrencyProvider;
+
 defined("ABSPATH") or die();
 class Base {
 
@@ -12,7 +19,10 @@ class Base {
 	public static $option_key = 'wdr_plugin_multi_currency';
 
 	/**
-	 * Multi-currency data list.
+	 * Multi-currency data list, keyed by the same slugs this option has always been saved
+	 * under (so existing installs keep their saved enable/disable choices with no migration).
+	 * "Is this provider active" is now resolved by the matching App\Currency\Providers\*
+	 * class instead of a raw plugin-file list.
 	 *
 	 * @var \string[][]
 	 */
@@ -21,32 +31,43 @@ class Base {
 			'name'        => 'VillaTheme currency switcher',
 			'description' => '',
 			'author'      => 'VillaTheme',
-			'file'        => [
-				'woo-multi-currency/woo-multi-currency.php',
-				'woocommerce-multi-currency/woocommerce-multi-currency.php',
-			],
+			'provider'    => WooMultiCurrencyProvider::class,
 			'handler'     => '\WDRCS\App\Compatibility\VillaTheme',
 		],
 		'realmag_currency_switcher'    => [
 			'name'        => 'Realmag currency switcher',
 			'description' => '',
 			'author'      => 'Realmag',
-			'file'        => [ 'woocommerce-currency-switcher/index.php' ],
+			'provider'    => WoocsProvider::class,
 			'handler'     => '\WDRCS\App\Compatibility\RealMag',
 		],
 		'wpml_currency_switcher'       => [
 			'name'        => 'WPML currency switcher',
 			'description' => '',
 			'author'      => 'WPML',
-			'file'        => [ 'sitepress-multilingual-cms/sitepress.php' ],
+			'provider'    => WcmlProvider::class,
 			'handler'     => '\WDRCS\App\Compatibility\WPML',
 		],
 		'wpwham_currency_switcher'     => [
 			'name'        => 'WPWham currency switcher',
 			'description' => '',
 			'author'      => 'WPWham',
-			'file'        => [ 'currency-switcher-woocommerce/currency-switcher-woocommerce.php' ],
+			'provider'    => WPWhamProvider::class,
 			'handler'     => '\WDRCS\App\Compatibility\WPWham',
+		],
+		'aelia_currency_switcher'      => [
+			'name'        => 'Aelia currency switcher',
+			'description' => '',
+			'author'      => 'Aelia',
+			'provider'    => AeliaCurrencyProvider::class,
+			'handler'     => '\WDRCS\App\Compatibility\Aelia',
+		],
+		'yith_currency_switcher'       => [
+			'name'        => 'YITH Multi Currency Switcher',
+			'description' => '',
+			'author'      => 'YITH',
+			'provider'    => YithMultiCurrencyProvider::class,
+			'handler'     => '\WDRCS\App\Compatibility\YITH',
 		],
 	];
 
@@ -60,18 +81,7 @@ class Base {
 		$compatibilities = self::$multi_currency_compatibility;
 		$list = [];
 		foreach ($compatibilities as $key => $compatibility) {
-			if (empty($compatibility['file'])) {
-				continue;
-			}
-			$is_active = false;
-			foreach ($compatibility['file'] as $file) {
-				if (\WDR\Core\Helpers\Plugin::isActive($file)) {
-					$is_active = true;
-					break;
-				}
-			}
-
-			if (!$is_active) {
+			if (empty($compatibility['provider']) || !$compatibility['provider']::isActive()) {
 				continue;
 			}
 

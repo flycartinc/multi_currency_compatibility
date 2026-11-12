@@ -2,14 +2,27 @@
 
 namespace WDRCS\App\Compatibility;
 
-use WDR\Core\Helpers\Settings;
-use WDR\Core\Helpers\WC;
+use WDR\Core\Modules\Store\Calculator;
+use WDRCS\App\Currency\Providers\WooMultiCurrencyProvider;
 
 defined('ABSPATH') || exit;
 
-
+/**
+ * Bridge for "Multi Currency for WooCommerce (CURCY) by VillaTheme".
+ *
+ * CURCY pro passes every converted amount through its beauty-price rounding (`wmc_get_price`), so a cart price or coupon
+ * amount handed back in the base currency would be rounded a second time ($1.81 → $1.99, a coupon −$0.36 → −$0.99). Pro keeps
+ * our values in the visitor's currency instead: its price condition filters leave the price we set as is, and our coupon's
+ * amount is put back after its conversion. Free has neither the rounding nor the condition filters: base-currency hand-back.
+ */
 class VillaTheme extends Currency
 {
+    /**
+     * Cart item prices set by Discount Rules, by product object.
+     *
+     * @var array<string, string>
+     */
+    private static $prices = [];
 
     /**
      * Initiates action.
@@ -18,152 +31,130 @@ class VillaTheme extends Currency
      */
     function run()
     {
-	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
-	    add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
-        add_filter('wdr_discounted_cart_item_price', [__CLASS__, 'getCartConvertedPrice'], 10, 2);
-        add_filter('wdr_discount_coupon_data', [__CLASS__, 'getCouponData'], 10, 1);
-        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
-        add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
-	    if (Settings::get('suppress_other_discount_plugins')) {
-		    add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
-	    }
+        $this->registerHooks();
+        add_action('wmc_get_products_price_ajax_handle_before', [__CLASS__, 'addPriceHtmlHooks']);
+        if (self::isPro()) {
+            add_filter('wmc_product_get_price_condition', [__CLASS__, 'convertsPrice'], 10, 3);
+            add_filter('wmc_product_variation_get_price_condition', [__CLASS__, 'convertsPrice'], 10, 3);
+            // after CURCY's own conversion (priority 10)
+            add_filter('woocommerce_coupon_get_amount', [__CLASS__, 'getCouponAmount'], 11, 2);
+            // after Discount Rules' price HTML (priority 100)
+            add_filter('woocommerce_get_price_html', [__CLASS__, 'addApproximatePrice'], 101, 2);
+        }
     }
 
-	/**
-	 * Converting price amount.
-	 *
-	 * @param int|float $price Item price.
-	 * @param string $from_currency
-	 * @param string $to_currency
-	 *
-	 * @return float|int
-	 */
-	static function getCovertAmount($price, $from_currency, $to_currency)
-	{
-		if(empty($price) && empty($to_currency)) return $price;
-		$setting = self::getCurrencySettingObject();
-		if ($setting === null) {
-			return null;
-		}
-		$selected_currencies = $setting->get_list_currencies();
-		$current_currency = $from_currency;
-
-		if (!$current_currency || !isset($selected_currencies[$current_currency]['rate'])) {
-			return null;
-		}
-		$currency_rate = $selected_currencies[$current_currency]['rate'];
-		return (float) $price / $currency_rate;
-	}
-
-
-	/**
-     * Get the currency setting object.
+    /**
+     * CURCY pro's approximate price ("Approximately: $1.20", added at priority 20) is dropped when Discount Rules rebuilds a
+     * discounted product's price HTML: add it again, from the discounted price, formatted as CURCY does (price.php
+     * add_approximately_price).
+     * ponytail: simple products only — a variable product keeps CURCY's undiscounted range (its span comes after our HTML).
      *
-     * @return object|null The currency setting object or null if not found.
+     * @param string $html Price HTML.
+     * @param \WC_Product $product Product.
+     *
+     * @return string
      */
-    static function getCurrencySettingObject()
+    static function addApproximatePrice($html, $product)
     {
-        if (class_exists('\WOOMULTI_CURRENCY_F_Data')) {
-            return new \WOOMULTI_CURRENCY_F_Data();
-        } elseif (class_exists('\WOOMULTI_CURRENCY_Data')) {
-            return new \WOOMULTI_CURRENCY_Data();
+        if (!$product instanceof \WC_Product || $product->is_type('variable') || strpos((string)$html, 'wmc-approximately') !== false) {
+            return $html;
         }
+        $curcy = self::approximatePriceSource();
+        $discount = $curcy ? Calculator::getShopDiscount($product) : [];
+        if (empty($discount['discount_price']) || !isset($discount['discounted_price'])) {
+            return $html;
+        }
+        $params = $curcy->prepare_param;
+        $rate = static::getRate();
+        $base_price = $rate > 0 ? (float)$discount['discounted_price'] / $rate : (float)$discount['discounted_price'];
+        $price = number_format((float)apply_filters('wmc_get_price', $base_price * (float)$params['rate'], $params['currency_code']),
+            (int)$params['decimals'], $params['decimal_separator'], $params['thousand_separator']);
+        $formatted = strpos($params['symbol'], '#PRICE#') ? str_replace('#PRICE#', $price, $params['symbol']) : sprintf($params['format'], $params['symbol'], $price);
+        $label = (string)\WOOMULTI_CURRENCY_Data::get_ins()->get_param('approximately_label');
+        $approximate = '<span class="wmc-approximately">' . (strpos($label, '{price}') ? str_replace('{price}', $formatted, $label) : $label . $formatted) . '</span>';
+
+        return $params['priority'] ? $approximate . $html : $html . $approximate;
+    }
+
+    /**
+     * CURCY's frontend price object, when its approximate price is on for this visitor (it adds add_approximately_price at
+     * priority 20 only then, with prepare_param set); CURCY keeps no reference to the object.
+     *
+     * @return object|null
+     */
+    private static function approximatePriceSource()
+    {
+        global $wp_filter;
+        if (empty($wp_filter['woocommerce_get_price_html']->callbacks[20])) {
+            return null;
+        }
+        foreach ($wp_filter['woocommerce_get_price_html']->callbacks[20] as $callback) {
+            $function = $callback['function'];
+            if (is_array($function) && is_object($function[0]) && $function[1] === 'add_approximately_price' && !empty($function[0]->prepare_param)) {
+                return $function[0];
+            }
+        }
+
         return null;
     }
 
-    /**
-     * Get the currency conversion rate.
-     *
-     * @return float|null The currency conversion rate or null if not found.
-     */
-    static function getConversionRate()
+    protected static function provider()
     {
-        $setting = self::getCurrencySettingObject();
-        if ($setting === null) {
-            return null;
-        }
-        $selected_currencies = $setting->get_list_currencies();
-        $current_currency = $setting->get_current_currency();
-
-	    if (!$current_currency || !isset($selected_currencies[$current_currency]['rate'])) {
-            return null;
-        }
-
-        return $selected_currencies[$current_currency]['rate'];
+        return WooMultiCurrencyProvider::class;
     }
 
     /**
-     * Converting price amount.
+     * CURCY pro (class `WOOMULTI_CURRENCY_Data`; free is `WOOMULTI_CURRENCY_F_Data`).
      *
-     * @param int|float $price Item price.
-     * @param string $discount_type
-     * @return float|int
+     * @return bool
      */
-    static function getConvertedPrice($price, string $discount_type)
+    private static function isPro()
     {
-        if (empty($price)) return $price;
-        $rate = self::getConversionRate();
-        return (float)$price * $rate;
+        return class_exists('WOOMULTI_CURRENCY_Data');
+    }
+
+    protected static function convertsCartItemPrice()
+    {
+        return !self::isPro();
+    }
+
+    protected static function convertsCouponAmount()
+    {
+        return !self::isPro();
     }
 
     /**
-     * Converting cart coupon data.
+     * Remember the price Discount Rules sets on the cart item (pro: in the visitor's currency).
      *
-     * @param array $coupon_data Coupon data.
-     * @return array
-     */
-    static function getCouponData(array $coupon_data)
-    {
-        if (empty($coupon_data['amount'])) {
-            return $coupon_data;
-        }
-        $rate = self::getConversionRate();
-        $coupon_data['amount'] = ($rate != 0) ? $coupon_data['amount'] / $rate : $coupon_data['amount'];
-        return $coupon_data;
-    }
-
-    /**
-     * Converting price amount.
-     *
-     * @param int|float $price Item price.
+     * @param int|float $price Discounted price in the visitor's currency.
      * @param array $cart_item Cart item.
+     *
      * @return float|int
      */
-    static function getCartConvertedPrice($price, array $cart_item)
+    static function getCartConvertedPrice($price, $cart_item)
     {
-        if (empty($price)) return $price;
-        $rate = self::getConversionRate();
-        return ($rate != 0) ? $price / $rate : $price;
+        if (self::isPro() && !empty($cart_item['data']) && is_object($cart_item['data'])) {
+            self::$prices[spl_object_hash($cart_item['data'])] = (string)wc_format_decimal($price);
+        }
+
+        return parent::getCartConvertedPrice($price, $cart_item);
     }
 
     /**
-     * Get converted value.
+     * CURCY pro converts a product's price unless this says no: not the price Discount Rules set (as set_price stored it).
      *
-     * @param string $discount_value_formatted Discount format value.
-     * @param array $range Discount range.
-     * @return string
+     * @param bool $convert Whether CURCY converts the price.
+     * @param mixed $price Price being read.
+     * @param \WC_Product $product Product.
+     *
+     * @return bool
      */
-    static function getConvertedValue(string $discount_value_formatted, array $range)
+    static function convertsPrice($convert, $price, $product)
     {
-        $discount_type = isset($range['discount_type']) && !empty($range['discount_type']) ? $range['discount_type'] : '';
-        if ($discount_type == 'percentage') {
-            return $discount_value_formatted;
+        if (!$convert || !is_object($product)) {
+            return $convert;
         }
-        $discount_value = isset($range['discount_value']) && !empty($range['discount_value']) ? $range['discount_value'] : '';
-        if (empty($discount_value)) {
-            return $discount_value_formatted;
-        }
-        $rate = self::getConversionRate();
-        if ($rate === null) {
-            return $discount_value_formatted;
-        }
-        $discount_value_formatted = WC::formatPrice((float)$discount_value * $rate);
-        if ($discount_type == 'flat') {
-            $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');
-        } elseif ($range['discount_method'] == 'set' && $discount_type == 'fixed_set_price') {
-            $discount_value_formatted = WC::formatPrice($range['discount_price']);
-        }
-        return $discount_value_formatted;
-    }
 
+        return (self::$prices[spl_object_hash($product)] ?? null) !== (string)$price;
+    }
 }
