@@ -2,13 +2,26 @@
 
 namespace WDRCS\App\Compatibility;
 
-use WDR\Core\Helpers\WC;
-use WDR\Core\Helpers\Settings;
+use WDRCS\App\Currency\Providers\WPWhamProvider;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Bridge for "Currency Switcher for WooCommerce by WPWham".
+ *
+ * WPWham converts every price read (its per-product prices, rounding, pretty price and "save prices in array" included) and
+ * every fixed coupon amount, with no way to skip one: a cart price or coupon amount handed back in the base currency would come
+ * back as WPWham's own price or rounded again. Our values stay in the visitor's currency instead and are put back after WPWham's
+ * conversion (the same `PHP_INT_MAX`, added later — on `init`).
+ */
 class WPWham extends Currency
 {
+    /**
+     * Cart item prices set by Discount Rules, by product object.
+     *
+     * @var array<string, string>
+     */
+    private static $prices = [];
 
     /**
      * Initiates action.
@@ -17,128 +30,77 @@ class WPWham extends Currency
      */
     function run()
     {
-	    add_filter('wdr_custom_price_convert', [__CLASS__, 'getCovertAmount'], 10, 3);
-	    add_filter('wdr_discount_get_fixed_price', [__CLASS__, 'getConvertedPrice'], 10, 2);
-        add_filter('wdr_discounted_cart_item_price', [__CLASS__, 'getCartConvertedPrice'], 10, 2);
-        add_filter('wdr_discounted_value_format', [__CLASS__, 'getConvertedValue'], 10, 2);
-        add_filter('wdr_discount_coupon_data', [__CLASS__, 'getCouponData'], 10, 1);
-        add_filter('wdr_apply_coupon_discount_based_on_filters', '__return_false', 100);
-	    if ( Settings::get( 'suppress_other_discount_plugins' ) ) {
-		    add_filter( 'wdr_suppress_allowed_hooks', 'WDRCS\App\Controller\Base::removeSuppressedHooks', 10, 1 );
-	    }
-    }
-
-	/**
-	 * Converting price amount.
-	 *
-	 * @param float|int $price Item price.
-	 * @param string $from_currency
-	 * @param string $to_currency
-	 *
-	 * @return float|int
-	 */
-	static function getCovertAmount($price, $from_currency, $to_currency)
-	{
-		if (empty($price) || !function_exists('alg_get_current_currency_code')) {
-			return $price;
-		}
-		$rate = self::getCurrencyExchangeRate($from_currency);
-		return (float) $price / $rate;
-	}
-
-    /**
-     * Converting cart coupon data.
-     *
-     * @param array $coupon_data Coupon data.
-     * @return array
-     */
-    static function getCouponData(array $coupon_data)
-    {
-        if (empty($coupon_data['amount']) || !function_exists('alg_get_current_currency_code')) {
-            return $coupon_data;
+        $this->registerHooks();
+        add_filter('woocommerce_product_get_price', [__CLASS__, 'getOurPrice'], PHP_INT_MAX, 2);
+        add_filter('woocommerce_product_variation_get_price', [__CLASS__, 'getOurPrice'], PHP_INT_MAX, 2);
+        add_filter('woocommerce_coupon_get_amount', [__CLASS__, 'getCouponAmount'], PHP_INT_MAX, 2);
+        // WPWham converts every cart fee into the visitor's currency (its "cart fees" option, on by default)
+        if ('yes' === get_option('alg_currency_switcher_cart_fees_enabled', 'yes')) {
+            add_filter('wdr_discount_fee_amount', [__CLASS__, 'getFeeAmount']);
         }
-        $currency_code = alg_get_current_currency_code();
-        $rate = self::getCurrencyExchangeRate($currency_code);
-        $coupon_data['amount'] = ($rate != 0) ? $coupon_data['amount'] / $rate : $coupon_data['amount'];
-        return $coupon_data;
     }
 
-    /**
-     * Converting price amount.
-     *
-     * @param float|int $price Item price.
-     * @param string $discount_type
-     * @return float|int
-     */
-    static function getConvertedPrice($price, string $discount_type)
+    protected static function convertsCartItemPrice()
     {
-        if (empty($price) || !function_exists('alg_get_current_currency_code')) {
-            return $price;
-        }
-        $currency_code = alg_get_current_currency_code();
-        $rate = self::getCurrencyExchangeRate($currency_code);
-        return (float)$price * $rate;
+        return false;
+    }
+
+    protected static function convertsCouponAmount()
+    {
+        return false;
     }
 
     /**
-     * Converting price amount.
+     * Remember the price Discount Rules sets on the cart item (in the visitor's currency).
      *
-     * @param float|int $price Item price.
+     * @param int|float $price Discounted price in the visitor's currency.
      * @param array $cart_item Cart item.
+     *
      * @return float|int
      */
-    static function getCartConvertedPrice($price, array $cart_item)
+    static function getCartConvertedPrice($price, $cart_item)
     {
-        if (empty($price) || !function_exists('alg_get_current_currency_code')) {
+        if (!empty($cart_item['data']) && is_object($cart_item['data'])) {
+            self::$prices[spl_object_hash($cart_item['data'])] = (string)wc_format_decimal($price);
+        }
+
+        return parent::getCartConvertedPrice($price, $cart_item);
+    }
+
+    /**
+     * The price Discount Rules set on a cart item, as set_price stored it — not WPWham's conversion of it.
+     *
+     * @param mixed $price Price after WPWham's conversion.
+     * @param \WC_Product $product Product.
+     *
+     * @return mixed
+     */
+    static function getOurPrice($price, $product)
+    {
+        if (!is_object($product) || !isset(self::$prices[spl_object_hash($product)])) {
             return $price;
         }
-        $currency_code = alg_get_current_currency_code();
-        $rate = self::getCurrencyExchangeRate($currency_code);
-        return ($rate != 0) ? $price / $rate : $price;
+        $ours = self::$prices[spl_object_hash($product)];
+
+        return $ours === (string)wc_format_decimal($product->get_price('edit')) ? $ours : $price;
     }
 
     /**
-     * Get converted value.
+     * Hand WPWham our fee-mode discount in the store's base currency: it multiplies every fee by the rate after us.
      *
-     * @param string $discount_value_formatted Discount format value.
-     * @param array $range Discount range.
-     * @return string
+     * @param int|float $amount Discount in the visitor's currency.
+     *
+     * @return float|int
      */
-    static function getConvertedValue(string $discount_value_formatted, array $range): string
+    static function getFeeAmount($amount)
     {
-        $discount_type = $range['discount_type'] ?? '';
-        if ($discount_type == 'percentage') {
-            return $discount_value_formatted;
-        }
-        $discount_value = $range['discount_value'] ?? '';
-        if (empty($discount_value) || !function_exists('alg_get_current_currency_code')) {
-            return $discount_value_formatted;
-        }
-        $currency_code = alg_get_current_currency_code();
-        $rate = self::getCurrencyExchangeRate($currency_code);
-        $discount_value_formatted = WC::formatPrice((float)$discount_value * $rate);
-        if ($discount_type == 'flat') {
-            $discount_value_formatted .= ' ' . __('flat', 'wdr-multi-currency-compatibility');
-        } elseif ($range['discount_method'] == 'set' && $discount_type == 'fixed_set_price') {
-            $discount_value_formatted = wc_price($discount_value);
-        }
-        $discount_value_formatted .= !empty($cart_discount_text) ? $cart_discount_text : '';
-        return $discount_value_formatted;
+        $rate = static::getRate();
+
+        return $rate > 0 ? $amount / $rate : $amount;
     }
 
-    /**
-     * Get currency exchange rate.
-     *
-     * @param string $currency_code Currency code.
-     * @return float
-     */
-    static function getCurrencyExchangeRate(string $currency_code)
+    protected static function provider()
     {
-        if (!class_exists('Alg_WC_Currency_Switcher') ||
-            !function_exists('alg_wc_cs_get_currency_exchange_rate')) {
-            return 1;
-        }
-        return alg_wc_cs_get_currency_exchange_rate($currency_code);
+        return WPWhamProvider::class;
     }
-
 }
