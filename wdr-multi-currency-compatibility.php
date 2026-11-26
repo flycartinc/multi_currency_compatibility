@@ -20,6 +20,15 @@
 
 defined( 'ABSPATH' ) or die();
 
+// Declare WooCommerce feature compatibility (HPOS, the block cart / checkout): undeclared, WooCommerce lists the add-on as
+// "uncertain" and warns about incompatible plugins while HPOS is on.
+add_action( 'before_woocommerce_init', function () {
+	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+	}
+} );
+
 /**
  * Check woocommerce and Discount rules active or not.
  */
